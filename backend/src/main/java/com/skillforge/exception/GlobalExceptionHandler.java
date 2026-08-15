@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,100 +24,137 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ValidationErrorResponse> handleValidationException(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request) {
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<ValidationErrorResponse> handleValidationException(
+                        MethodArgumentNotValidException ex,
+                        HttpServletRequest request) {
 
-        Map<String, String> errors = new LinkedHashMap<>();
+                Map<String, String> errors = new LinkedHashMap<>();
 
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
+                for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+                        errors.put(error.getField(), error.getDefaultMessage());
+                }
+
+                ValidationErrorResponse response = ValidationErrorResponse.builder()
+                                .success(false)
+                                .errorCode(ErrorCodes.VALIDATION_ERROR)
+                                .message(ApiMessages.VALIDATION_FAILED)
+                                .errors(errors)
+                                .timestamp(LocalDateTime.now())
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity.badRequest().body(response);
         }
 
-        ValidationErrorResponse response = ValidationErrorResponse.builder()
-                .success(false)
-                .errorCode(ErrorCodes.VALIDATION_ERROR)
-                .message(ApiMessages.VALIDATION_FAILED)
-                .errors(errors)
-                .timestamp(LocalDateTime.now())
-                .path(request.getRequestURI())
-                .build();
+        @ExceptionHandler(ConstraintViolationException.class)
+        public ResponseEntity<ErrorResponse> handleConstraintViolation(
+                        ConstraintViolationException ex,
+                        HttpServletRequest request) {
 
-        return ResponseEntity.badRequest().body(response);
-    }
+                ErrorResponse response = ErrorResponse.builder()
+                                .success(false)
+                                .errorCode(ErrorCodes.VALIDATION_ERROR)
+                                .message(ex.getMessage())
+                                .timestamp(LocalDateTime.now())
+                                .path(request.getRequestURI())
+                                .build();
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolation(
-            ConstraintViolationException ex,
-            HttpServletRequest request) {
+                return ResponseEntity.badRequest().body(response);
+        }
 
-        ErrorResponse response = ErrorResponse.builder()
-                .success(false)
-                .errorCode(ErrorCodes.VALIDATION_ERROR)
-                .message(ex.getMessage())
-                .timestamp(LocalDateTime.now())
-                .path(request.getRequestURI())
-                .build();
+        @ExceptionHandler(ApiException.class)
+        public ResponseEntity<ErrorResponse> handleApiException(
+                        ApiException ex,
+                        HttpServletRequest request) {
 
-        return ResponseEntity.badRequest().body(response);
-    }
+                LOGGER.warn("API Exception : {}", ex.getMessage());
 
-    @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ErrorResponse> handleApiException(
-            ApiException ex,
-            HttpServletRequest request) {
+                ErrorResponse response = ErrorResponse.builder()
+                                .success(false)
+                                .errorCode(ex.getErrorCode())
+                                .message(ex.getMessage())
+                                .timestamp(LocalDateTime.now())
+                                .path(request.getRequestURI())
+                                .build();
 
-        LOGGER.warn("API Exception: {}", ex.getMessage());
+                return ResponseEntity.badRequest().body(response);
+        }
 
-        ErrorResponse response = ErrorResponse.builder()
-                .success(false)
-                .errorCode(ex.getErrorCode())
-                .message(ex.getMessage())
-                .timestamp(LocalDateTime.now())
-                .path(request.getRequestURI())
-                .build();
+        @ExceptionHandler(BadCredentialsException.class)
+        public ResponseEntity<ErrorResponse> handleBadCredentials(
+                        BadCredentialsException ex,
+                        HttpServletRequest request) {
 
-        return ResponseEntity.badRequest().body(response);
-    }
+                LOGGER.warn("Authentication Failed : {}", ex.getMessage());
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(
-            AccessDeniedException ex,
-            HttpServletRequest request) {
+                ErrorResponse response = ErrorResponse.builder()
+                                .success(false)
+                                .errorCode(ErrorCodes.AUTHENTICATION_FAILED)
+                                .message("Invalid email or password.")
+                                .timestamp(LocalDateTime.now())
+                                .path(request.getRequestURI())
+                                .build();
 
-        LOGGER.warn("Access denied: {}", ex.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body(response);
+        }
 
-        ErrorResponse response = ErrorResponse.builder()
-                .success(false)
-                .errorCode(ErrorCodes.ACCESS_DENIED)
-                .message(ApiMessages.ACCESS_DENIED)
-                .timestamp(LocalDateTime.now())
-                .path(request.getRequestURI())
-                .build();
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<ErrorResponse> handleAccessDenied(
+                        AccessDeniedException ex,
+                        HttpServletRequest request) {
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-    }
+                ErrorResponse response = ErrorResponse.builder()
+                                .success(false)
+                                .errorCode(ErrorCodes.ACCESS_DENIED)
+                                .message(ApiMessages.ACCESS_DENIED)
+                                .timestamp(LocalDateTime.now())
+                                .path(request.getRequestURI())
+                                .build();
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(
-            Exception ex,
-            HttpServletRequest request) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(response);
+        }
 
-        LOGGER.error("Unexpected error", ex);
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ErrorResponse> handleException(
+                        Exception ex,
+                        HttpServletRequest request) {
 
-        ErrorResponse response = ErrorResponse.builder()
-                .success(false)
-                .errorCode(ErrorCodes.INTERNAL_SERVER_ERROR)
-                .message(ApiMessages.INTERNAL_SERVER_ERROR)
-                .timestamp(LocalDateTime.now())
-                .path(request.getRequestURI())
-                .build();
+                // Temporary Debug
+                ex.printStackTrace();
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(response);
-    }
+                LOGGER.error("Unexpected Error", ex);
+
+                ErrorResponse response = ErrorResponse.builder()
+                                .success(false)
+                                .errorCode(ErrorCodes.INTERNAL_SERVER_ERROR)
+                                .message(ApiMessages.INTERNAL_SERVER_ERROR)
+                                .timestamp(LocalDateTime.now())
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(response);
+        }
+
+        @ExceptionHandler(AiServiceException.class)
+        public ResponseEntity<ErrorResponse> handleAiServiceException(
+                        AiServiceException ex,
+                        HttpServletRequest request) {
+
+                ErrorResponse error = ErrorResponse.builder()
+                                .errorCode("AI-001")
+                                .message(ex.getMessage())
+                                .timestamp(LocalDateTime.now())
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity
+                                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                                .body(error);
+        }
 }

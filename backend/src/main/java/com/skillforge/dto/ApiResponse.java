@@ -17,8 +17,47 @@ public class ApiResponse<T> {
 
     private final T data;
 
-    private final LocalDateTime timestamp;
+    @Builder.Default
+    private final LocalDateTime timestamp = LocalDateTime.now();
 
     private final String path;
 
+    public static <T> ApiResponse<T> success(String message, T data) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .message(message)
+                .data(data)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> success(
+            String message,
+            T data,
+            String path
+    ) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .message(message)
+                .data(data)
+                .path(path)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> failure(String message) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .message(message)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> failure(
+            String message,
+            String path
+    ) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .message(message)
+                .path(path)
+                .build();
+    }
 }

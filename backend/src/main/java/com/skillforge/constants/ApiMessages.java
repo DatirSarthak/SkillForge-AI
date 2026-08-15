@@ -30,4 +30,12 @@ public final class ApiMessages {
     public static final String PASSWORD_CONFIRMATION_FAILED = "New password and confirm password do not match.";
 
     public static final String SAME_PASSWORD_NOT_ALLOWED = "New password must be different from current password.";
+
+    public static final String AI_RESPONSE_GENERATED = "AI response generated successfully.";
+
+    public static final String CONVERSATIONS_FETCHED = "Conversations retrieved successfully.";
+
+    public static final String CONVERSATION_FETCHED = "Conversation retrieved successfully.";
+
+    public static final String CONVERSATION_DELETED = "Conversation deleted successfully.";
 }

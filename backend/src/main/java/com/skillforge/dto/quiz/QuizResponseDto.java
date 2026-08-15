@@ -1,0 +1,28 @@
+package com.skillforge.dto.quiz;
+
+import com.skillforge.entity.QuizDifficulty;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+public record QuizResponseDto(
+
+        UUID id,
+
+        String title,
+
+        String topic,
+
+        QuizDifficulty difficulty,
+
+        Integer questionCount,
+
+        List<QuizQuestionDto> questions,
+
+        LocalDateTime createdAt,
+
+        LocalDateTime updatedAt
+
+) {
+}

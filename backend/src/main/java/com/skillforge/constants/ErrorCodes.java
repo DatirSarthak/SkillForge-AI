@@ -15,6 +15,7 @@ public final class ErrorCodes {
     // Resource
     public static final String RESOURCE_NOT_FOUND = "RES-001";
     public static final String DUPLICATE_RESOURCE = "RES-002";
+    public static final String RESOURCE_CONFLICT = "RES-003";
 
     // Request
     public static final String BAD_REQUEST = "REQ-001";

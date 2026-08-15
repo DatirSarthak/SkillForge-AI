@@ -13,6 +13,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.ArrayList;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -52,6 +55,11 @@ public class User implements UserDetails {
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @Builder.Default
+    private List<Conversation> conversations = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -70,37 +78,37 @@ public class User implements UserDetails {
     }
 
     @Override
-public Collection<? extends GrantedAuthority> getAuthorities() {
-    return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
-}
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
 
-@Override
-public String getPassword() {
-    return passwordHash;
-}
+    @Override
+    public String getPassword() {
+        return passwordHash;
+    }
 
-@Override
-public String getUsername() {
-    return email;
-}
+    @Override
+    public String getUsername() {
+        return email;
+    }
 
-@Override
-public boolean isAccountNonExpired() {
-    return true;
-}
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
-@Override
-public boolean isAccountNonLocked() {
-    return true;
-}
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
-@Override
-public boolean isCredentialsNonExpired() {
-    return true;
-}
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
-@Override
-public boolean isEnabled() {
-    return accountStatus == AccountStatus.ACTIVE;
-}
+    @Override
+    public boolean isEnabled() {
+        return accountStatus == AccountStatus.ACTIVE;
+    }
 }
