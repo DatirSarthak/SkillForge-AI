@@ -77,7 +77,7 @@ public class DashboardServiceImpl implements DashboardService {
                                 QuickActionDto.builder()
                                                 .title("Roadmap")
                                                 .description("Generate Learning Roadmap")
-                                                .route("/roadmap")
+                                                .route("/ai-roadmap")
                                                 .icon("Map")
                                                 .build());
 

@@ -54,7 +54,7 @@ public class DashboardServiceImpl implements DashboardService {
                 QuickActionDto.builder()
                         .title("AI Notes")
                         .description("Generate Smart Notes")
-                        .route("/notes")
+                        .route("/ai-notes")
                         .icon("NotebookPen")
                         .build()
         );
@@ -63,7 +63,7 @@ public class DashboardServiceImpl implements DashboardService {
                 QuickActionDto.builder()
                         .title("AI Quiz")
                         .description("Generate Quiz")
-                        .route("/quiz")
+                        .route("/ai-quiz")
                         .icon("ClipboardCheck")
                         .build()
         );
@@ -81,7 +81,7 @@ public class DashboardServiceImpl implements DashboardService {
                 QuickActionDto.builder()
                         .title("Roadmap")
                         .description("Generate Learning Roadmap")
-                        .route("/roadmap")
+                        .route("/ai-roadmap")
                         .icon("Map")
                         .build()
         );

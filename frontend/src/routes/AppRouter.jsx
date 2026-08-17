@@ -18,10 +18,12 @@ import QuizResultPage from "../pages/ai-quiz/QuizResultPage";
 import ResumeReviewPage from "../pages/resume-review/ResumeReviewPage";
 import ResumeReviewDetailsPage from "../pages/resume-review/ResumeReviewDetailsPage";
 
+import AiRoadmapPage from "../pages/roadmap/AiRoadmapPage";
+import RoadmapDetailsPage from "../pages/roadmap/RoadmapDetailsPage";
+
 function AppRouter() {
   return (
     <Routes>
-
       {/* Public Routes */}
 
       <Route
@@ -137,6 +139,30 @@ function AppRouter() {
         }
       />
 
+      {/* AI Roadmap */}
+
+      <Route
+        path="/ai-roadmap"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <AiRoadmapPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/ai-roadmap/:roadmapId"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <RoadmapDetailsPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
       {/* 404 */}
 
       <Route
@@ -155,7 +181,6 @@ function AppRouter() {
           </div>
         }
       />
-
     </Routes>
   );
 }
