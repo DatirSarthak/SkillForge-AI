@@ -1,6 +1,11 @@
 import RoadmapStep from "./RoadmapStep";
 
-const RoadmapTimeline = ({ steps = [] }) => {
+const RoadmapTimeline = ({
+  steps = [],
+  progressByStepId = {},
+  updatingStepId = null,
+  onToggleProgress,
+}) => {
   if (!steps.length) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
@@ -20,7 +25,9 @@ const RoadmapTimeline = ({ steps = [] }) => {
           <RoadmapStep
             key={step.id || `${step.stepOrder}-${index}`}
             step={step}
-            isLast={index === steps.length - 1}
+            completed={Boolean(progressByStepId[step.id]?.completed)}
+            updating={updatingStepId === step.id}
+            onToggle={onToggleProgress}
           />
         ))}
       </div>

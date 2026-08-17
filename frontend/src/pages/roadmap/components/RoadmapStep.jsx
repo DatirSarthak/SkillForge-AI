@@ -9,7 +9,7 @@ const difficultyStyles = {
     "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
 };
 
-const RoadmapStep = ({ step }) => {
+const RoadmapStep = ({ step, completed = false, updating = false, onToggle }) => {
   const difficulty = step?.difficulty?.toUpperCase();
 
   const difficultyClass =
@@ -17,19 +17,41 @@ const RoadmapStep = ({ step }) => {
     "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
 
   return (
-    <article className="relative pl-12">
-      {/* Step indicator */}
-      <div className="absolute left-0 top-0 z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-indigo-600 text-sm font-bold text-white shadow-sm dark:border-slate-950">
-        {step.stepOrder}
+    <article id={`roadmap-step-${step.id}`} className="relative pl-12 scroll-mt-24">
+      <div
+        className={`absolute left-0 top-0 z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white text-sm font-bold text-white shadow-sm dark:border-slate-950 ${
+          completed ? "bg-emerald-600" : "bg-indigo-600"
+        }`}
+      >
+        {completed ? "✓" : step.stepOrder}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        {/* Header */}
+      <div
+        className={`rounded-2xl border p-5 shadow-sm transition ${
+          completed
+            ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-500/20 dark:bg-emerald-500/5"
+            : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+        }`}
+      >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {step.title}
-            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3
+                className={`text-lg font-semibold ${
+                  completed
+                    ? "text-emerald-800 dark:text-emerald-300"
+                    : "text-slate-900 dark:text-white"
+                }`}
+              >
+                {step.title}
+              </h3>
+
+              {completed && (
+                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                  Completed
+                </span>
+              )}
+            </div>
 
             {step.estimatedDuration && (
               <p className="mt-1 text-xs text-slate-400">
@@ -45,12 +67,10 @@ const RoadmapStep = ({ step }) => {
           </span>
         </div>
 
-        {/* Description */}
         <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-400">
           {step.description}
         </p>
 
-        {/* Learning Objectives */}
         {step.learningObjectives?.length > 0 && (
           <div className="mt-5">
             <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -71,7 +91,6 @@ const RoadmapStep = ({ step }) => {
           </div>
         )}
 
-        {/* Subtopics */}
         {step.subtopics?.length > 0 && (
           <div className="mt-5">
             <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -91,7 +110,6 @@ const RoadmapStep = ({ step }) => {
           </div>
         )}
 
-        {/* Project */}
         {step.projectSuggestion && (
           <div className="mt-5 rounded-xl bg-indigo-50 p-4 dark:bg-indigo-500/10">
             <h4 className="text-sm font-semibold text-indigo-700 dark:text-indigo-400">
@@ -103,6 +121,23 @@ const RoadmapStep = ({ step }) => {
             </p>
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={() => onToggle?.(step.id, !completed)}
+          disabled={updating}
+          className={`mt-5 inline-flex min-w-36 items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+            completed
+              ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              : "bg-indigo-600 text-white hover:bg-indigo-700"
+          }`}
+        >
+          {updating
+            ? "Saving..."
+            : completed
+              ? "Mark as Incomplete"
+              : "Mark as Complete"}
+        </button>
       </div>
     </article>
   );

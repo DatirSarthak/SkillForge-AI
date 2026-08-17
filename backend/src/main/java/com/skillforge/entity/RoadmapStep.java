@@ -52,6 +52,14 @@ public class RoadmapStep {
     @Column(name = "estimated_duration", length = 100)
     private String estimatedDuration;
 
+    @OneToOne(
+            mappedBy = "roadmapStep",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private RoadmapStepProgress progress;
+
     @ElementCollection
     @CollectionTable(
             name = "roadmap_step_objectives",

@@ -1,9 +1,11 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { toast } from "react-hot-toast";
 import RoadmapTimeline from "./components/RoadmapTimeline";
 import RoadmapSkeleton from "./components/RoadmapSkeleton";
 import useAiRoadmap from "../../hooks/useAiRoadmap";
+import useRoadmapProgress from "../../hooks/useRoadmapProgress";
+import RoadmapProgressCard from "./components/RoadmapProgressCard";
 
 const RoadmapDetailsPage = () => {
   const { roadmapId } = useParams();
@@ -16,16 +18,57 @@ const RoadmapDetailsPage = () => {
     getRoadmap,
   } = useAiRoadmap();
 
+  const {
+    progress,
+    loading: progressLoading,
+    updatingStepId,
+    error: progressError,
+    getProgress,
+    updateStepProgress,
+  } = useRoadmapProgress(roadmapId);
+
   useEffect(() => {
     if (!roadmapId) {
       return;
     }
 
     getRoadmap(roadmapId).catch(() => {});
-  }, [roadmapId, getRoadmap]);
+    getProgress().catch(() => {});
+  }, [roadmapId, getRoadmap, getProgress]);
 
   const handleBack = () => {
     navigate("/ai-roadmap");
+  };
+
+  const progressByStepId = (progress?.steps || []).reduce((accumulator, item) => {
+    accumulator[item.stepId] = item;
+    return accumulator;
+  }, {});
+
+  const handleResume = (stepId) => {
+    if (!stepId) {
+      return;
+    }
+
+    document
+      .getElementById(`roadmap-step-${stepId}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleToggleProgress = async (stepId, completed) => {
+    try {
+      await updateStepProgress(stepId, completed);
+      toast.success(
+        completed
+          ? "Step marked as completed."
+          : "Step marked as incomplete."
+      );
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message ||
+          "Failed to update roadmap progress."
+      );
+    }
   };
 
   if (detailsLoading) {
@@ -139,6 +182,18 @@ const RoadmapDetailsPage = () => {
           </div>
         </section>
 
+        <RoadmapProgressCard
+          progress={progress}
+          loading={progressLoading}
+          onResume={handleResume}
+        />
+
+        {progressError && !progress && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">
+            {progressError}
+          </div>
+        )}
+
         {/* Goal */}
         {roadmap.goal && (
           <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -164,7 +219,12 @@ const RoadmapDetailsPage = () => {
             </p>
           </div>
 
-          <RoadmapTimeline steps={roadmap.steps || []} />
+          <RoadmapTimeline
+            steps={roadmap.steps || []}
+            progressByStepId={progressByStepId}
+            updatingStepId={updatingStepId}
+            onToggleProgress={handleToggleProgress}
+          />
         </section>
       </div>
     </div>
