@@ -10,6 +10,7 @@ import com.skillforge.entity.User;
 import com.skillforge.exception.ResourceNotFoundException;
 import com.skillforge.repository.RoadmapRepository;
 import com.skillforge.repository.RoadmapStepProgressRepository;
+import com.skillforge.service.NotificationService;
 import com.skillforge.service.ProgressService;
 import com.skillforge.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class ProgressServiceImpl implements ProgressService {
     private final UserService userService;
     private final RoadmapRepository roadmapRepository;
     private final RoadmapStepProgressRepository progressRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -65,10 +67,30 @@ public class ProgressServiceImpl implements ProgressService {
                         .completed(false)
                         .build());
 
+        boolean wasCompleted = Boolean.TRUE.equals(progress.getCompleted());
         boolean completed = request.completed();
+
         progress.setCompleted(completed);
         progress.setCompletedAt(completed ? LocalDateTime.now() : null);
         progressRepository.save(progress);
+
+        if (completed && !wasCompleted) {
+            RoadmapProgressResponseDto updatedProgress = buildProgressResponse(roadmap);
+
+            notificationService.createNotification(
+                    userService.getCurrentUserEntity().getId(),
+                    updatedProgress.progressPercentage().compareTo(BigDecimal.valueOf(100)) == 0
+                            ? com.skillforge.entity.NotificationType.ROADMAP_COMPLETED
+                            : com.skillforge.entity.NotificationType.ROADMAP_PROGRESS,
+                    updatedProgress.progressPercentage().compareTo(BigDecimal.valueOf(100)) == 0
+                            ? "Roadmap completed"
+                            : "Learning progress updated",
+                    updatedProgress.progressPercentage().compareTo(BigDecimal.valueOf(100)) == 0
+                            ? "Congratulations! You completed your roadmap: " + roadmap.getTitle()
+                            : "You completed \"" + step.getTitle() + "\". Keep going!",
+                    "/ai-roadmap/" + roadmap.getId()
+            );
+        }
 
         log.info(
                 "Roadmap step progress updated. roadmapId={}, stepId={}, completed={}, userId={}",
