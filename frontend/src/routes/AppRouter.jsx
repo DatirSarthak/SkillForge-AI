@@ -20,6 +20,8 @@ import ResumeReviewDetailsPage from "../pages/resume-review/ResumeReviewDetailsP
 
 import AiRoadmapPage from "../pages/roadmap/AiRoadmapPage";
 import RoadmapDetailsPage from "../pages/roadmap/RoadmapDetailsPage";
+import NotificationsPage from "../pages/notifications/NotificationsPage";
+import SearchPage from "../pages/search/SearchPage";
 
 function AppRouter() {
   return (
@@ -158,6 +160,32 @@ function AppRouter() {
           <ProtectedRoute>
             <MainLayout>
               <RoadmapDetailsPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Search */}
+
+      <Route
+        path="/search"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <SearchPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Notifications */}
+
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <NotificationsPage />
             </MainLayout>
           </ProtectedRoute>
         }
