@@ -119,13 +119,30 @@ public class GlobalExceptionHandler {
                                 .body(response);
         }
 
+        @ExceptionHandler(FileStorageException.class)
+        public ResponseEntity<ErrorResponse> handleFileStorageException(
+                        FileStorageException ex,
+                        HttpServletRequest request) {
+
+                LOGGER.error("File storage error", ex);
+
+                ErrorResponse response = ErrorResponse.builder()
+                                .success(false)
+                                .errorCode(ErrorCodes.INTERNAL_SERVER_ERROR)
+                                .message("Unable to process file storage operation.")
+                                .timestamp(LocalDateTime.now())
+                                .path(request.getRequestURI())
+                                .build();
+
+                return ResponseEntity
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(response);
+        }
+
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse> handleException(
                         Exception ex,
                         HttpServletRequest request) {
-
-                // Temporary Debug
-                ex.printStackTrace();
 
                 LOGGER.error("Unexpected Error", ex);
 

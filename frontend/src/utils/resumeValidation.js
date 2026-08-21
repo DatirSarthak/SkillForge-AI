@@ -3,6 +3,7 @@ export const MAX_RESUME_SIZE = 5 * 1024 * 1024;
 export const ALLOWED_RESUME_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
 ];
 
 export const validateResumeFile = (file) => {
@@ -18,8 +19,15 @@ export const validateResumeFile = (file) => {
     return "Resume size must not exceed 5 MB.";
   }
 
+  const extension = file.name?.split(".").pop()?.toLowerCase();
+  const allowedExtensions = ["pdf", "docx", "txt"];
+
+  if (!allowedExtensions.includes(extension)) {
+    return "Only PDF, DOCX and TXT files are supported.";
+  }
+
   if (!ALLOWED_RESUME_TYPES.includes(file.type)) {
-    return "Only PDF and DOCX files are supported.";
+    return "The selected file type does not match its extension.";
   }
 
   return null;

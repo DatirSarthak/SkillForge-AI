@@ -12,6 +12,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 @Service
@@ -35,6 +40,7 @@ public class ResumeTextExtractionServiceImpl
             String text = switch (extension) {
                 case "pdf" -> extractPdf(file);
                 case "docx" -> extractDocx(file);
+                case "txt" -> extractTxt(file);
                 default -> throw new ResumeProcessingException(
                         "Unsupported resume format."
                 );
@@ -87,6 +93,37 @@ public class ResumeTextExtractionServiceImpl
                      new XWPFWordExtractor(document)) {
 
             return extractor.getText();
+        }
+    }
+
+    private String extractTxt(
+            MultipartFile file
+    ) throws IOException {
+
+        byte[] bytes = file.getBytes();
+
+        try {
+            CharBuffer decoded =
+                    StandardCharsets.UTF_8
+                            .newDecoder()
+                            .onMalformedInput(CodingErrorAction.REPORT)
+                            .onUnmappableCharacter(CodingErrorAction.REPORT)
+                            .decode(ByteBuffer.wrap(bytes));
+
+            String text = decoded.toString();
+
+            if (!text.isEmpty()
+                    && text.charAt(0) == '\uFEFF') {
+                text = text.substring(1);
+            }
+
+            return text;
+
+        } catch (CharacterCodingException exception) {
+            throw new ResumeProcessingException(
+                    "The TXT resume must use valid UTF-8 text.",
+                    exception
+            );
         }
     }
 

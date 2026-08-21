@@ -1,7 +1,7 @@
 package com.skillforge.exception;
 
 public class InvalidResumeFileException
-        extends RuntimeException {
+        extends FileValidationException {
 
     public InvalidResumeFileException(
             String message
