@@ -22,6 +22,7 @@ import AiRoadmapPage from "../pages/roadmap/AiRoadmapPage";
 import RoadmapDetailsPage from "../pages/roadmap/RoadmapDetailsPage";
 import NotificationsPage from "../pages/notifications/NotificationsPage";
 import SearchPage from "../pages/search/SearchPage";
+import SettingsPage from "../pages/settings/SettingsPage";
 
 function AppRouter() {
   return (
@@ -207,6 +208,17 @@ function AppRouter() {
               </p>
             </div>
           </div>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <SettingsPage />
+            </MainLayout>
+          </ProtectedRoute>
         }
       />
     </Routes>
