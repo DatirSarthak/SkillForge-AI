@@ -23,6 +23,7 @@ import RoadmapDetailsPage from "../pages/roadmap/RoadmapDetailsPage";
 import NotificationsPage from "../pages/notifications/NotificationsPage";
 import SearchPage from "../pages/search/SearchPage";
 import SettingsPage from "../pages/settings/SettingsPage";
+import ProfilePage from "../pages/profile/ProfilePage";
 
 function AppRouter() {
   return (
@@ -217,6 +218,17 @@ function AppRouter() {
           <ProtectedRoute>
             <MainLayout>
               <SettingsPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ProfilePage />
             </MainLayout>
           </ProtectedRoute>
         }
