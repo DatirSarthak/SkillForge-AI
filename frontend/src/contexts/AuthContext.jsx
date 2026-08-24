@@ -1,16 +1,15 @@
 import { createContext, useContext, useState } from "react";
+
 import {
   getCurrentUser,
   isAuthenticated,
-  logout,
+  logout as authLogout,
 } from "../services/authService";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-
   const [authenticated, setAuthenticated] = useState(isAuthenticated());
-
   const [user, setUser] = useState(getCurrentUser());
 
   const signIn = () => {
@@ -18,8 +17,8 @@ export const AuthProvider = ({ children }) => {
     setUser(getCurrentUser());
   };
 
-  const signOut = () => {
-    logout();
+  const logout = () => {
+    authLogout();
     setAuthenticated(false);
     setUser(null);
   };
@@ -30,7 +29,7 @@ export const AuthProvider = ({ children }) => {
         authenticated,
         user,
         signIn,
-        signOut,
+        logout,
       }}
     >
       {children}
