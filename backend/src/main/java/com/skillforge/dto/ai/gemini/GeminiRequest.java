@@ -17,4 +17,5 @@ public class GeminiRequest {
 
     private List<GeminiContent> contents;
 
+    private GeminiGenerationConfig generationConfig;
 }

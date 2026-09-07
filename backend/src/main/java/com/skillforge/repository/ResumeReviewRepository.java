@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +23,26 @@ public interface ResumeReviewRepository
     Optional<ResumeReview> findByIdAndUser(
             UUID id,
             User user
+    );
+
+    long countByUser(User user);
+
+    @Query("""
+            SELECT COALESCE(AVG(r.atsScore), 0)
+            FROM ResumeReview r
+            WHERE r.user = :user
+            """)
+    BigDecimal findAverageAtsScoreByUser(
+            @Param("user") User user
+    );
+
+    @Query("""
+            SELECT COALESCE(MAX(r.atsScore), 0)
+            FROM ResumeReview r
+            WHERE r.user = :user
+            """)
+    BigDecimal findBestAtsScoreByUser(
+            @Param("user") User user
     );
 
     @Query("""

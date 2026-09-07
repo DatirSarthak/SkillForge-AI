@@ -64,7 +64,7 @@ text-transparent
 
                 <div className="mt-8 rounded-xl border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 p-5 shadow-sm">
 
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
 
                         💡 Try asking:
 
@@ -86,19 +86,19 @@ hover:scale-105">
 
                         </span>
 
-                        <span className="rounded-full bg-white px-4 py-2 shadow">
+                        <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-800 shadow-sm transition hover:scale-105 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
 
                             AI Quiz
 
                         </span>
 
-                        <span className="rounded-full bg-white px-4 py-2 shadow">
+                        <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-800 shadow-sm transition hover:scale-105 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
 
                             Roadmap
 
                         </span>
 
-                        <span className="rounded-full bg-white px-4 py-2 shadow">
+                        <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-800 shadow-sm transition hover:scale-105 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
 
                             Interview Prep
 
@@ -106,7 +106,7 @@ hover:scale-105">
 
                     </div>
 
-                    <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                    <ul className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-300">
 
                         <li>• Explain Java Multithreading</li>
 

@@ -1,5 +1,7 @@
 package com.skillforge.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,58 +33,78 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        System.out.println("==================================");
-        System.out.println("URI : " + request.getRequestURI());
-        System.out.println("Authorization : " + authHeader);
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-
-            System.out.println("No Bearer Token Found");
-
             filterChain.doFilter(request, response);
             return;
         }
 
         String jwt = authHeader.substring(7);
 
-        System.out.println("JWT : " + jwt);
+        try {
 
-        String email = jwtService.extractUsername(jwt);
+            String email = jwtService.extractUsername(jwt);
 
-        System.out.println("Extracted Email : " + email);
+            if (email != null
+                    && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-        if (email != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails =
+                        userDetailsService.loadUserByUsername(email);
 
-            UserDetails userDetails =
-                    userDetailsService.loadUserByUsername(email);
+                boolean valid =
+                        jwtService.isTokenValid(jwt, userDetails);
 
-            System.out.println("Database User : " + userDetails.getUsername());
+                if (valid) {
 
-            boolean valid =
-                    jwtService.isTokenValid(jwt, userDetails);
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-            System.out.println("Token Valid : " + valid);
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
 
-            if (valid) {
-
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities());
-
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request));
-
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authToken);
-
-                System.out.println("Authentication Stored In Context");
+                    SecurityContextHolder.getContext()
+                            .setAuthentication(authToken);
+                }
             }
-        }
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+
+        } catch (ExpiredJwtException ex) {
+
+            SecurityContextHolder.clearContext();
+
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+
+            response.getWriter().write("""
+                    {
+                        "success": false,
+                        "message": "Access token expired.",
+                        "data": null
+                    }
+                    """);
+
+        } catch (JwtException | IllegalArgumentException ex) {
+
+            SecurityContextHolder.clearContext();
+
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+
+            response.getWriter().write("""
+                    {
+                        "success": false,
+                        "message": "Invalid access token.",
+                        "data": null
+                    }
+                    """);
+        }
     }
 }

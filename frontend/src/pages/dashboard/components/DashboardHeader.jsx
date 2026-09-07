@@ -41,7 +41,7 @@ const formatNotificationDate = (date) => {
 const DashboardHeader = () => {
   const navigate = useNavigate();
   const { darkMode, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { signOut } = useAuth();
 
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -444,7 +444,7 @@ const DashboardHeader = () => {
                   role="menuitem"
                   onClick={() => {
                     setProfileOpen(false);
-                    logout();
+                    signOut();
                     navigate("/login", { replace: true });
                   }}
                   className="

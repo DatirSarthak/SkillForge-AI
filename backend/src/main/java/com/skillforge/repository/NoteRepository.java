@@ -1,10 +1,13 @@
 package com.skillforge.repository;
 
 import com.skillforge.entity.Note;
+import com.skillforge.entity.NoteType;
 import com.skillforge.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,12 +19,19 @@ public interface NoteRepository extends JpaRepository<Note, UUID> {
 
     Optional<Note> findByIdAndUser(UUID id, User user);
 
+    long countByUser(User user);
+
+    long countByUserAndNoteType(
+            User user,
+            NoteType noteType
+    );
+
     List<Note> findByUserAndTitleContainingIgnoreCaseOrderByUpdatedAtDesc(
             User user,
             String keyword
     );
 
-    @org.springframework.data.jpa.repository.Query("""
+    @Query("""
             SELECT n
             FROM Note n
             WHERE n.user = :user
@@ -29,8 +39,8 @@ public interface NoteRepository extends JpaRepository<Note, UUID> {
             ORDER BY n.updatedAt DESC
             """)
     Page<Note> searchByUser(
-            @org.springframework.data.repository.query.Param("user") User user,
-            @org.springframework.data.repository.query.Param("keyword") String keyword,
+            @Param("user") User user,
+            @Param("keyword") String keyword,
             Pageable pageable
     );
 }

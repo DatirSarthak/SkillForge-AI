@@ -1,6 +1,13 @@
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const WelcomeCard = ({ user }) => {
+  const navigate = useNavigate();
+
+  const handleContinueLearning = () => {
+    navigate("/ai-roadmap");
+  };
+
   return (
     <div
       className="
@@ -48,6 +55,8 @@ shadow-xl
         </div>
 
         <button
+          type="button"
+          onClick={handleContinueLearning}
           className="
 hidden
 md:flex

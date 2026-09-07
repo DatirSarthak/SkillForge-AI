@@ -1,137 +1,124 @@
-import { useEffect, useState } from "react";
 import {
-    Check,
     Edit3,
     FileText,
     Trash2,
-    X,
+    Sparkles,
+    Check,
 } from "lucide-react";
 
 export default function NotesToolbar({
     note,
     onDelete,
     onEdit,
-    isUpdating = false,
 }) {
-    const [title, setTitle] = useState("");
-
-    useEffect(() => {
-        setTitle(note?.title || "");
-    }, [note]);
-
     if (!note) {
         return (
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                    <FileText size={18} />
-                </div>
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-slate-800">
+                        <FileText size={18} />
+                    </div>
 
-                <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                        Note Preview
-                    </p>
+                    <div>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">
+                            Note Preview
+                        </p>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Select a note to view it
-                    </p>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            Select a note from your history.
+                        </p>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    const handleSave = () => {
-        const trimmedTitle = title.trim();
-
-        if (!trimmedTitle) {
-            return;
-        }
-
-        if (trimmedTitle === note.title) {
-            onEdit(null);
-            return;
-        }
-
-        onEdit({
-            id: note.id,
-            payload: {
-                title: trimmedTitle,
-            },
-        });
-    };
-
-    const handleCancel = () => {
-        setTitle(note.title || "");
-        onEdit(null);
-    };
-
     return (
-        <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-            {/* Note information */}
-            <div className="flex min-w-0 flex-1 items-center gap-3">
+                {/* Information */}
+                <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                        <FileText size={19} />
+                    </div>
 
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-                    <FileText size={18} />
+                    <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <p className="truncate text-sm font-bold text-slate-900 dark:text-white sm:text-base">
+                                {note.title || "Untitled Note"}
+                            </p>
+
+                            <span className="hidden shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 sm:inline-flex">
+                                <Check size={11} />
+                                Saved
+                            </span>
+                        </div>
+
+                        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
+                            {note.noteType?.replaceAll("_", " ")}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="min-w-0 flex-1">
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={onEdit}
+                        disabled={!onEdit}
+                        className="
+                            inline-flex h-9 flex-1 items-center
+                            justify-center gap-2 rounded-lg
+                            border border-slate-200 px-3
+                            text-xs font-semibold text-slate-700
+                            transition
+                            hover:border-emerald-300
+                            hover:bg-emerald-50
+                            hover:text-emerald-600
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                            dark:border-slate-700
+                            dark:text-slate-300
+                            dark:hover:border-emerald-500/40
+                            dark:hover:bg-emerald-500/10
+                            dark:hover:text-emerald-400
+                            sm:flex-none
+                        "
+                    >
+                        <Edit3 size={15} />
+                        <span>Rename</span>
+                    </button>
 
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(event) => setTitle(event.target.value)}
-                        disabled={isUpdating}
-                        aria-label="Note title"
-                        className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-400 focus:bg-slate-50 focus:ring-2 focus:ring-emerald-500/10 dark:text-white dark:focus:border-emerald-500/50 dark:focus:bg-slate-950"
-                    />
-
-                    {note.noteType && (
-                        <p className="mt-0.5 px-2 text-xs text-slate-500 dark:text-slate-400">
-                            {note.noteType.replaceAll("_", " ")}
-                        </p>
-                    )}
+                    <button
+                        type="button"
+                        onClick={onDelete}
+                        className="
+                            inline-flex h-9 flex-1 items-center
+                            justify-center gap-2 rounded-lg
+                            border border-slate-200 px-3
+                            text-xs font-semibold text-slate-700
+                            transition
+                            hover:border-red-300
+                            hover:bg-red-50
+                            hover:text-red-600
+                            dark:border-slate-700
+                            dark:text-slate-300
+                            dark:hover:border-red-500/40
+                            dark:hover:bg-red-500/10
+                            dark:hover:text-red-400
+                            sm:flex-none
+                        "
+                    >
+                        <Trash2 size={15} />
+                        <span>Delete</span>
+                    </button>
                 </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex shrink-0 items-center gap-2">
-
-                <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={
-                        isUpdating ||
-                        !title.trim() ||
-                        title.trim() === (note.title || "")
-                    }
-                    aria-label="Save note title"
-                    title="Save title"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-200 text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-emerald-500/30 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
-                >
-                    <Check size={17} />
-                </button>
-
-                <button
-                    type="button"
-                    onClick={handleCancel}
-                    disabled={isUpdating}
-                    aria-label="Cancel title edit"
-                    title="Cancel"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
-                >
-                    <X size={17} />
-                </button>
-
-                <button
-                    type="button"
-                    onClick={onDelete}
-                    disabled={isUpdating}
-                    aria-label="Delete note"
-                    title="Delete note"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-400 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-                >
-                    <Trash2 size={17} />
-                </button>
+            <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 text-[11px] text-slate-400 dark:border-slate-800">
+                <Sparkles size={12} />
+                AI Generated
             </div>
         </div>
     );

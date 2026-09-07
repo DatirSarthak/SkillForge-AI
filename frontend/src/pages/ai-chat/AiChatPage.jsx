@@ -131,10 +131,13 @@ dark:bg-slate-900
 
                         onConfirm={async () => {
 
-                            await deleteConversation(deleteId);
+                            const conversationId = deleteId;
 
                             setDeleteId(null);
 
+                            await deleteConversation(
+                                conversationId
+                            );
                         }}
 
                     />

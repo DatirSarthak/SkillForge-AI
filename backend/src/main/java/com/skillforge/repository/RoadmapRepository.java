@@ -23,6 +23,13 @@ public interface RoadmapRepository extends JpaRepository<Roadmap, UUID> {
             User user
     );
 
+    List<Roadmap> findByUserOrderByCreatedAtDesc(
+            User user,
+            Pageable pageable
+    );
+
+    long countByUser(User user);
+
     @Query("""
             SELECT r
             FROM Roadmap r

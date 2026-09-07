@@ -1,4 +1,8 @@
-import { FileText, Clock3 } from "lucide-react";
+import {
+    FileText,
+    Clock3,
+    Sparkles,
+} from "lucide-react";
 
 const formatDate = (date) => {
     if (!date) return "";
@@ -10,8 +14,11 @@ const formatDate = (date) => {
     }
 
     return parsedDate.toLocaleString("en-IN", {
-        date: "medium",
-        time: "short",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
     });
 };
 
@@ -29,9 +36,10 @@ export default function NotesEditor({ note }) {
     const content = formatContent(note.generatedContent);
 
     return (
-        <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900">
+        <article className="flex max-h-[calc(100vh-260px)] min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900">
+
             {/* Header */}
-            <div className="border-b border-slate-200 p-6 dark:border-slate-800">
+            <div className="shrink-0 border-b border-slate-200 p-6 dark:border-slate-800">
                 <div className="flex items-start gap-4">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
                         <FileText size={21} />
@@ -60,8 +68,8 @@ export default function NotesEditor({ note }) {
                 </div>
             </div>
 
-            {/* Generated Content */}
-            <div className="p-6">
+            {/* Scrollable Generated Content */}
+            <div className="min-h-0 flex-1 overflow-y-auto p-6 scrollbar-thin">
                 {content ? (
                     <div className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700 dark:text-slate-300">
                         {content}
@@ -74,6 +82,7 @@ export default function NotesEditor({ note }) {
                     </div>
                 )}
             </div>
+
         </article>
     );
 }

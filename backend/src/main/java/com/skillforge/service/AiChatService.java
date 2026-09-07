@@ -7,10 +7,15 @@ import com.skillforge.dto.ai.ConversationSummaryDto;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public interface AiChatService {
 
     ChatResponseDto chat(ChatRequestDto request);
+
+    ChatResponseDto streamChat(
+            ChatRequestDto request,
+            Consumer<String> onChunk);
 
     ConversationDto getConversation(UUID conversationId);
 
@@ -18,7 +23,7 @@ public interface AiChatService {
 
     void deleteConversation(UUID conversationId);
 
-    // NEW
-    void renameConversation(UUID conversationId, String title);
-
+    void renameConversation(
+            UUID conversationId,
+            String title);
 }

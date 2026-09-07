@@ -1,6 +1,7 @@
 package com.skillforge.repository;
 
 import com.skillforge.entity.Quiz;
+import com.skillforge.entity.QuizDifficulty;
 import com.skillforge.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,18 @@ public interface QuizRepository
     Optional<Quiz> findByIdAndUser(
             UUID id,
             User user
+    );
+
+    List<Quiz> findByUserOrderByCreatedAtDesc(
+            User user,
+            Pageable pageable
+    );
+
+    long countByUser(User user);
+
+    long countByUserAndDifficulty(
+            User user,
+            QuizDifficulty difficulty
     );
 
     @Query("""

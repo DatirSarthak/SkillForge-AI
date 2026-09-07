@@ -24,6 +24,7 @@ import NotificationsPage from "../pages/notifications/NotificationsPage";
 import SearchPage from "../pages/search/SearchPage";
 import SettingsPage from "../pages/settings/SettingsPage";
 import ProfilePage from "../pages/profile/ProfilePage";
+import AnalyticsPage from "../pages/AnalyticsPage";
 
 function AppRouter() {
   return (
@@ -232,6 +233,11 @@ function AppRouter() {
             </MainLayout>
           </ProtectedRoute>
         }
+      />
+
+      <Route
+        path="/analytics"
+        element={<AnalyticsPage />}
       />
     </Routes>
   );

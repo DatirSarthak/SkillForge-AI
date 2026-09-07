@@ -17,12 +17,11 @@ import {
     X,
 } from "lucide-react";
 
-import { login } from "../../services/authService";
 import { useAuth } from "../../contexts/AuthContext";
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const { signIn } = useAuth();
+    const { login } = useAuth();
 
     const [formData, setFormData] = useState({
         email: "",
@@ -59,17 +58,17 @@ const LoginPage = () => {
         setError("");
 
         try {
-            await login(formData);
+            const response = await login(formData);
 
-            signIn();
-
-            navigate("/dashboard", {
-                replace: true,
-            });
+            if (response?.success) {
+                navigate("/dashboard", {
+                    replace: true,
+                });
+            }
         } catch (error) {
             setError(
                 error.response?.data?.message ||
-                    "Invalid email or password."
+                "Invalid email or password."
             );
         } finally {
             setLoading(false);

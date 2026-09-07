@@ -22,6 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import jakarta.servlet.DispatcherType;
 
 @Configuration
 @EnableWebSecurity
@@ -49,10 +50,16 @@ public class SecurityConfig {
                                                 .accessDeniedHandler(accessDeniedHandler))
 
                                 .authorizeHttpRequests(auth -> auth
+                                                .dispatcherTypeMatchers(
+                                                                DispatcherType.ASYNC,
+                                                                DispatcherType.ERROR)
+                                                .permitAll()
+
                                                 .requestMatchers(
                                                                 "/api/auth/**",
                                                                 "/error")
                                                 .permitAll()
+
                                                 .anyRequest().authenticated())
 
                                 .addFilterBefore(

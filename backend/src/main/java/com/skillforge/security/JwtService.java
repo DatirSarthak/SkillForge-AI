@@ -9,12 +9,11 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class JwtService {
@@ -25,6 +24,9 @@ public class JwtService {
     @Value("${application.security.jwt.expiration}")
     private long jwtExpiration;
 
+    @Value("${application.security.refresh-token.expiration}")
+    private long refreshTokenExpiration;
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -33,6 +35,7 @@ public class JwtService {
     public <T> T extractClaim(
             String token,
             Function<Claims, T> claimsResolver) {
+
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
@@ -61,10 +64,24 @@ public class JwtService {
     public String generateToken(
             Map<String, Object> extraClaims,
             UserDetails userDetails) {
+
+        return Jwts.builder()
+                .claims(extraClaims)
+                .subject(userDetails.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(
+                        System.currentTimeMillis() + jwtExpiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String generateRefreshToken(UserDetails userDetails) {
+
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .expiration(new Date(
+                        System.currentTimeMillis() + refreshTokenExpiration))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -76,9 +93,22 @@ public class JwtService {
     public boolean isTokenValid(
             String token,
             UserDetails userDetails) {
+
         final String username = extractUsername(token);
 
         return username.equals(userDetails.getUsername())
                 && !isTokenExpired(token);
     }
+
+    public boolean isRefreshTokenValid(
+            String token,
+            UserDetails userDetails) {
+
+        return isTokenValid(token, userDetails);
+    }
+
+    public long getJwtExpiration() {
+        return jwtExpiration;
+    }
+
 }
