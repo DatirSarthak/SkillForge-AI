@@ -1,7 +1,9 @@
+import { useMemo, useState } from "react";
 import {
     FileText,
     Search,
     Clock3,
+    X,
 } from "lucide-react";
 
 const formatDate = (date) => {
@@ -26,6 +28,28 @@ export default function NotesHistory({
     onSelect,
     isLoading,
 }) {
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const filteredNotes = useMemo(() => {
+        const query = searchTerm.trim().toLowerCase();
+
+        if (!query) {
+            return notes;
+        }
+
+        return notes.filter((note) => {
+            const title = note?.title?.toLowerCase() || "";
+            const type = note?.noteType?.toLowerCase() || "";
+            const content = note?.generatedContent?.toLowerCase() || "";
+
+            return (
+                title.includes(query) ||
+                type.includes(query) ||
+                content.includes(query)
+            );
+        });
+    }, [notes, searchTerm]);
+
     return (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900">
 
@@ -63,10 +87,15 @@ export default function NotesHistory({
 
                     <input
                         type="search"
+                        value={searchTerm}
+                        onChange={(event) =>
+                            setSearchTerm(event.target.value)
+                        }
                         placeholder="Search notes..."
+                        aria-label="Search notes"
                         className="
                             w-full rounded-xl border border-slate-200
-                            bg-slate-50 py-2.5 pl-10 pr-3
+                            bg-slate-50 py-2.5 pl-10 pr-10
                             text-sm text-slate-900 outline-none
                             placeholder:text-slate-400
                             transition
@@ -78,11 +107,23 @@ export default function NotesHistory({
                             dark:text-white
                         "
                     />
+
+                    {searchTerm && (
+                        <button
+                            type="button"
+                            onClick={() => setSearchTerm("")}
+                            aria-label="Clear note search"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                        >
+                            <X size={15} />
+                        </button>
+                    )}
                 </div>
             </div>
 
             {/* Notes */}
             <div className="max-h-[420px] overflow-y-auto p-2.5 lg:max-h-[calc(100vh-300px)]">
+
                 {isLoading ? (
                     <div className="space-y-2 p-2">
                         {[1, 2, 3].map((item) => (
@@ -106,9 +147,23 @@ export default function NotesHistory({
                             Generate your first AI note.
                         </p>
                     </div>
+                ) : filteredNotes.length === 0 ? (
+                    <div className="px-4 py-10 text-center">
+                        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-slate-800">
+                            <Search size={20} />
+                        </div>
+
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            No matching notes
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-400">
+                            Try a different title or keyword.
+                        </p>
+                    </div>
                 ) : (
                     <div className="space-y-2">
-                        {notes.map((note) => {
+                        {filteredNotes.map((note) => {
                             const isSelected =
                                 selectedNote?.id === note.id;
 

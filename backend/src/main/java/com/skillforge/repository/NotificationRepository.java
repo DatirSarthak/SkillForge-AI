@@ -20,6 +20,8 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             Pageable pageable
     );
 
+    long countByUser(User user);
+
     long countByUserAndReadFalse(User user);
 
     Optional<Notification> findByIdAndUser(UUID id, User user);

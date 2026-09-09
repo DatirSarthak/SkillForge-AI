@@ -98,6 +98,7 @@ export default function useAiNotes() {
 
         // Update
         updateNote: updateMutation.mutate,
+        updateNoteAsync: updateMutation.mutateAsync,
         isUpdating: updateMutation.isPending,
 
         // Delete

@@ -60,6 +60,9 @@ public class SecurityConfig {
                                                                 "/error")
                                                 .permitAll()
 
+                                                .requestMatchers("/api/admin/**")
+                                                .hasRole("ADMIN")
+
                                                 .anyRequest().authenticated())
 
                                 .addFilterBefore(

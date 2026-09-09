@@ -12,38 +12,42 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface RoadmapStepProgressRepository
-        extends JpaRepository<RoadmapStepProgress, UUID> {
+                extends JpaRepository<RoadmapStepProgress, UUID> {
 
-    Optional<RoadmapStepProgress> findByRoadmapStepId(UUID roadmapStepId);
+        Optional<RoadmapStepProgress> findByRoadmapStepId(UUID roadmapStepId);
 
-    List<RoadmapStepProgress> findByRoadmapStepRoadmapId(UUID roadmapId);
+        List<RoadmapStepProgress> findByRoadmapStepRoadmapId(UUID roadmapId);
 
-    @Query("""
-            SELECT COUNT(p)
-            FROM RoadmapStepProgress p
-            WHERE p.roadmapStep.roadmap.user = :user
-            """)
-    long countByUser(
-            @Param("user") User user
-    );
+        @Query("""
+                        SELECT COUNT(p)
+                        FROM RoadmapStepProgress p
+                        WHERE p.roadmapStep.roadmap.user = :user
+                        """)
+        long countByUser(
+                        @Param("user") User user);
 
-    @Query("""
-            SELECT COUNT(p)
-            FROM RoadmapStepProgress p
-            WHERE p.roadmapStep.roadmap.user = :user
-              AND p.completed = true
-            """)
-    long countCompletedByUser(
-            @Param("user") User user
-    );
+        @Query("""
+                        SELECT COUNT(p)
+                        FROM RoadmapStepProgress p
+                        WHERE p.roadmapStep.roadmap.user = :user
+                          AND p.completed = true
+                        """)
+        long countCompletedByUser(
+                        @Param("user") User user);
 
-    @Query("""
-            SELECT MAX(p.completedAt)
-            FROM RoadmapStepProgress p
-            WHERE p.roadmapStep.roadmap.user = :user
-              AND p.completed = true
-            """)
-    LocalDateTime findLastCompletedAtByUser(
-            @Param("user") User user
-    );
+        @Query("""
+                        SELECT COUNT(p)
+                        FROM RoadmapStepProgress p
+                        WHERE p.completed = true
+                        """)
+        long countCompletedByAllUsers();
+
+        @Query("""
+                        SELECT MAX(p.completedAt)
+                        FROM RoadmapStepProgress p
+                        WHERE p.roadmapStep.roadmap.user = :user
+                          AND p.completed = true
+                        """)
+        LocalDateTime findLastCompletedAtByUser(
+                        @Param("user") User user);
 }

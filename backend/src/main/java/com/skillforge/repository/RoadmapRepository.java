@@ -31,6 +31,25 @@ public interface RoadmapRepository extends JpaRepository<Roadmap, UUID> {
     long countByUser(User user);
 
     @Query("""
+            SELECT COUNT(r)
+            FROM Roadmap r
+            WHERE r.user = :user
+              AND SIZE(r.steps) > 0
+              AND NOT EXISTS (
+                  SELECT s
+                  FROM RoadmapStep s
+                  WHERE s.roadmap = r
+                    AND (
+                        s.progress IS NULL
+                        OR s.progress.completed = false
+                    )
+              )
+            """)
+    long countCompletedByUser(
+            @Param("user") User user
+    );
+
+    @Query("""
             SELECT r
             FROM Roadmap r
             WHERE r.user = :user
@@ -38,7 +57,8 @@ public interface RoadmapRepository extends JpaRepository<Roadmap, UUID> {
                     LOWER(r.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
                     OR LOWER(r.goal) LIKE LOWER(CONCAT('%', :keyword, '%'))
                     OR LOWER(r.topic) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                    OR LOWER(r.targetRole) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(COALESCE(r.targetRole, ''))
+                       LIKE LOWER(CONCAT('%', :keyword, '%'))
                   )
             ORDER BY r.updatedAt DESC
             """)

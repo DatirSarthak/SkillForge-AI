@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Sparkles, FileText } from "lucide-react";
+import toast from "react-hot-toast";
 
 import useAiNotes from "../../hooks/useAiNotes";
 
@@ -10,25 +11,44 @@ import NotesToolbar from "./components/NotesToolbar";
 import LoadingSkeleton from "./components/LoadingSkeleton";
 import EmptyState from "./components/EmptyState";
 import DeleteNoteDialog from "./components/DeleteNoteDialog";
+import RenameNoteModal from "./components/RenameNoteModal";
 
 export default function AiNotesPage() {
     const {
         notes,
         isLoading,
         isGenerating,
+        isUpdating,
         isDeleting,
         generateNotes,
+        updateNote,
         deleteNote,
     } = useAiNotes();
 
     const [selectedNote, setSelectedNote] = useState(null);
     const [deleteDialog, setDeleteDialog] = useState(false);
+    const [renameDialog, setRenameDialog] = useState(false);
 
     useEffect(() => {
         if (!selectedNote && notes.length > 0) {
             setSelectedNote(notes[0]);
         }
     }, [notes, selectedNote]);
+
+    // Keep selected note synchronized after notes update
+    useEffect(() => {
+        if (!selectedNote) {
+            return;
+        }
+
+        const updatedSelectedNote = notes.find(
+            (note) => note.id === selectedNote.id
+        );
+
+        if (updatedSelectedNote) {
+            setSelectedNote(updatedSelectedNote);
+        }
+    }, [notes, selectedNote?.id]);
 
     const handleGenerate = (payload) => {
         generateNotes(payload, {
@@ -54,6 +74,51 @@ export default function AiNotesPage() {
                 setDeleteDialog(false);
             },
         });
+    };
+
+    const handleRename = (newTitle) => {
+        if (!selectedNote?.id) {
+            return;
+        }
+
+        updateNote(
+            {
+                id: selectedNote.id,
+                payload: {
+                    title: newTitle,
+                },
+            },
+            {
+                onSuccess: (response) => {
+                    const updatedNote = response?.data;
+
+                    if (updatedNote) {
+                        setSelectedNote(updatedNote);
+                    } else {
+                        setSelectedNote((current) =>
+                            current
+                                ? {
+                                      ...current,
+                                      title: newTitle,
+                                  }
+                                : current
+                        );
+                    }
+
+                    toast.success(
+                        response?.message || "Note renamed successfully."
+                    );
+
+                    setRenameDialog(false);
+                },
+                onError: (error) => {
+                    toast.error(
+                        error?.response?.data?.message ||
+                            "Unable to rename note."
+                    );
+                },
+            }
+        );
     };
 
     return (
@@ -129,7 +194,7 @@ export default function AiNotesPage() {
                             <NotesToolbar
                                 note={selectedNote}
                                 onDelete={() => setDeleteDialog(true)}
-                                onEdit={() => {}}
+                                onEdit={() => setRenameDialog(true)}
                             />
 
                             {isLoading ? (
@@ -144,12 +209,22 @@ export default function AiNotesPage() {
                 </div>
             </div>
 
+            {/* Delete Dialog */}
             <DeleteNoteDialog
                 open={deleteDialog}
                 note={selectedNote}
                 loading={isDeleting}
                 onCancel={() => setDeleteDialog(false)}
                 onConfirm={handleDelete}
+            />
+
+            {/* Rename Dialog */}
+            <RenameNoteModal
+                open={renameDialog}
+                note={selectedNote}
+                loading={isUpdating}
+                onClose={() => setRenameDialog(false)}
+                onConfirm={handleRename}
             />
         </div>
     );

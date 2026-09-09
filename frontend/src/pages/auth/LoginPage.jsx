@@ -9,25 +9,28 @@ import {
     EyeOff,
     LockKeyhole,
     Mail,
-    Moon,
     Rocket,
+    ShieldCheck,
     Sparkles,
     Trophy,
+    User,
     UserPlus,
     X,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 import { useAuth } from "../../contexts/AuthContext";
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, signOut } = useAuth();
 
     const [formData, setFormData] = useState({
         email: "",
         password: "",
     });
 
+    const [loginMode, setLoginMode] = useState("USER");
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -44,6 +47,13 @@ const LoginPage = () => {
         }
     };
 
+    const handleModeChange = (mode) => {
+        if (loading) return;
+
+        setLoginMode(mode);
+        setError("");
+    };
+
     const clearEmail = () => {
         setFormData((previous) => ({
             ...previous,
@@ -54,30 +64,99 @@ const LoginPage = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
+        if (loading) return;
+
         setLoading(true);
         setError("");
 
         try {
             const response = await login(formData);
 
-            if (response?.success) {
-                navigate("/dashboard", {
+            if (!response?.success || !response?.data) {
+                setError(
+                    response?.message ||
+                        "Unable to sign in. Please try again."
+                );
+                return;
+            }
+
+            const authenticatedUser = response.data.user;
+
+            if (!authenticatedUser) {
+                setError(
+                    "Login succeeded, but user information was not returned."
+                );
+
+                signOut();
+                return;
+            }
+
+            const actualRole = authenticatedUser.role;
+
+            /*
+             * The selected login mode is only a UX-level entry point.
+             * Backend authentication and authorization remain authoritative.
+             *
+             * USER mode  -> USER role only
+             * ADMIN mode -> ADMIN role only
+             */
+
+            if (
+                loginMode === "USER" &&
+                actualRole !== "USER"
+            ) {
+                signOut();
+
+                const message =
+                    "This account is not a regular user account.";
+
+                setError(message);
+                toast.error(message);
+                return;
+            }
+
+            if (
+                loginMode === "ADMIN" &&
+                actualRole !== "ADMIN"
+            ) {
+                signOut();
+
+                const message =
+                    "Admin access is available only for administrator accounts.";
+
+                setError(message);
+                toast.error(message);
+                return;
+            }
+
+            if (actualRole === "ADMIN") {
+                navigate("/admin", {
                     replace: true,
                 });
+
+                return;
             }
+
+            navigate("/dashboard", {
+                replace: true,
+            });
         } catch (error) {
-            setError(
-                error.response?.data?.message ||
-                "Invalid email or password."
-            );
+            const message =
+                error?.response?.data?.message ||
+                "Invalid email or password.";
+
+            setError(message);
         } finally {
             setLoading(false);
         }
     };
 
+    const isAdminMode = loginMode === "ADMIN";
+
     return (
         <main className="relative h-screen overflow-hidden bg-[#050816] text-white">
             {/* ================= BACKGROUND ================= */}
+
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute -left-40 -top-52 h-[30rem] w-[30rem] rounded-full bg-blue-600/15 blur-3xl" />
 
@@ -91,8 +170,10 @@ const LoginPage = () => {
             </div>
 
             {/* ================= HEADER ================= */}
+
             <header className="relative z-20 flex h-[68px] items-center justify-between px-5 sm:px-8 lg:px-12">
                 {/* Logo */}
+
                 <button
                     type="button"
                     onClick={() => navigate("/")}
@@ -115,6 +196,7 @@ const LoginPage = () => {
                 </button>
 
                 {/* Navigation */}
+
                 <div className="hidden items-center gap-7 text-sm text-slate-500 md:flex">
                     <span>Learn</span>
                     <span>Build</span>
@@ -123,13 +205,8 @@ const LoginPage = () => {
                 </div>
 
                 {/* Right */}
+
                 <div className="flex items-center gap-2 sm:gap-3">
-                    <span
-                        aria-hidden="true"
-                        className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 sm:flex"
-                    >
-                        <Moon size={15} />
-                    </span>
 
                     <button
                         type="button"
@@ -150,9 +227,11 @@ const LoginPage = () => {
             </header>
 
             {/* ================= MAIN ================= */}
-            <section className="relative z-10 mx-auto flex h-[calc(100vh-68px)] w-full max-w-[1400px] items-center px-5 pb-5 sm:px-8 lg:px-12">
+
+            <section className="relative z-10 mx-auto flex h-[calc(100vh-68px)] w-full max-w-[1400px] items-center px-5 pb-5 pt-5 sm:px-8 lg:px-12">
                 <div className="grid w-full grid-cols-1 items-center gap-8 lg:grid-cols-[1fr_440px] lg:gap-14 xl:grid-cols-[1.05fr_440px]">
                     {/* ================= HERO ================= */}
+
                     <motion.div
                         initial={{
                             opacity: 0,
@@ -168,19 +247,25 @@ const LoginPage = () => {
                         className="hidden lg:block"
                     >
                         {/* Badge */}
+
                         <div className="mb-5 inline-flex rounded-full border border-violet-400/20 bg-violet-500/10 px-4 py-1.5 text-xs font-medium tracking-wide text-violet-200">
                             AI-powered
+
                             <span className="mx-2 text-violet-500">
                                 •
                             </span>
+
                             Career-focused
+
                             <span className="mx-2 text-violet-500">
                                 •
                             </span>
+
                             Future-ready
                         </div>
 
                         {/* Heading */}
+
                         <h1 className="max-w-[680px] text-[56px] font-black leading-[0.98] tracking-[-0.045em] xl:text-[64px]">
                             Build Your
 
@@ -190,6 +275,7 @@ const LoginPage = () => {
                         </h1>
 
                         {/* Description */}
+
                         <p className="mt-5 max-w-[590px] text-base leading-7 text-slate-400">
                             SkillForge AI helps you learn
                             in-demand skills, get AI career
@@ -198,6 +284,7 @@ const LoginPage = () => {
                         </p>
 
                         {/* Features */}
+
                         <div className="mt-7 space-y-3.5">
                             <FeatureItem
                                 icon={BookOpen}
@@ -219,6 +306,7 @@ const LoginPage = () => {
                         </div>
 
                         {/* Slogan */}
+
                         <div className="mt-7 select-none font-serif text-xl italic leading-6 text-violet-400/75">
                             <span className="block">
                                 Same People.
@@ -231,6 +319,7 @@ const LoginPage = () => {
                     </motion.div>
 
                     {/* ================= LOGIN CARD ================= */}
+
                     <motion.div
                         initial={{
                             opacity: 0,
@@ -248,25 +337,121 @@ const LoginPage = () => {
                     >
                         <div className="rounded-[26px] border border-violet-400/20 bg-[#080b1b]/90 p-5 shadow-2xl shadow-violet-950/40 backdrop-blur-xl sm:p-6">
                             {/* Icon */}
-                            <div className="mx-auto flex h-[62px] w-[62px] items-center justify-center rounded-[19px] bg-gradient-to-br from-blue-500 via-violet-600 to-fuchsia-600 shadow-lg shadow-violet-600/25">
-                                <Sparkles
-                                    size={29}
-                                    className="text-white"
-                                />
+
+                            <div
+                                className={`mx-auto flex h-[62px] w-[62px] items-center justify-center rounded-[19px] bg-gradient-to-br ${
+                                    isAdminMode
+                                        ? "from-violet-600 via-purple-600 to-fuchsia-600"
+                                        : "from-blue-500 via-violet-600 to-fuchsia-600"
+                                } shadow-lg shadow-violet-600/25`}
+                            >
+                                {isAdminMode ? (
+                                    <ShieldCheck
+                                        size={29}
+                                        className="text-white"
+                                    />
+                                ) : (
+                                    <Sparkles
+                                        size={29}
+                                        className="text-white"
+                                    />
+                                )}
                             </div>
 
                             {/* Heading */}
+
                             <div className="mt-3.5 text-center">
                                 <h2 className="text-[28px] font-bold tracking-tight">
-                                    Welcome Back
+                                    {isAdminMode
+                                        ? "Admin Login"
+                                        : "Welcome Back"}
                                 </h2>
 
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Sign in to your SkillForge AI account
+                                    {isAdminMode
+                                        ? "Sign in to manage SkillForge AI"
+                                        : "Sign in to your SkillForge AI account"}
                                 </p>
                             </div>
 
+                            {/* ================= LOGIN MODE ================= */}
+
+                            <div className="mt-5 rounded-xl border border-slate-800 bg-[#0c1225] p-1">
+                                <div
+                                    role="tablist"
+                                    aria-label="Login type"
+                                    className="grid grid-cols-2 gap-1"
+                                >
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={
+                                            loginMode === "USER"
+                                        }
+                                        disabled={loading}
+                                        onClick={() =>
+                                            handleModeChange("USER")
+                                        }
+                                        className={`flex h-10 items-center justify-center gap-2 rounded-lg px-3 text-xs font-semibold transition ${
+                                            loginMode === "USER"
+                                                ? "bg-white text-slate-900 shadow-sm"
+                                                : "text-slate-500 hover:bg-white/5 hover:text-slate-200"
+                                        } disabled:cursor-not-allowed disabled:opacity-60`}
+                                    >
+                                        <User size={15} />
+
+                                        User Login
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={
+                                            loginMode === "ADMIN"
+                                        }
+                                        disabled={loading}
+                                        onClick={() =>
+                                            handleModeChange("ADMIN")
+                                        }
+                                        className={`flex h-10 items-center justify-center gap-2 rounded-lg px-3 text-xs font-semibold transition ${
+                                            loginMode === "ADMIN"
+                                                ? "bg-white text-slate-900 shadow-sm"
+                                                : "text-slate-500 hover:bg-white/5 hover:text-slate-200"
+                                        } disabled:cursor-not-allowed disabled:opacity-60`}
+                                    >
+                                        <ShieldCheck size={15} />
+
+                                        Admin Login
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Mode hint */}
+
+                            <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-slate-500">
+                                {isAdminMode ? (
+                                    <>
+                                        <ShieldCheck
+                                            size={13}
+                                            className="text-violet-400"
+                                        />
+
+                                        Administrator access only
+                                    </>
+                                ) : (
+                                    <>
+                                        <User
+                                            size={13}
+                                            className="text-blue-400"
+                                        />
+
+                                        Regular user account access
+                                    </>
+                                )}
+                            </div>
+
                             {/* Error */}
+
                             {error && (
                                 <motion.div
                                     initial={{
@@ -277,7 +462,7 @@ const LoginPage = () => {
                                         opacity: 1,
                                         y: 0,
                                     }}
-                                    className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-200"
+                                    className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 px-3.5 py-2.5 text-xs leading-5 text-red-200"
                                     role="alert"
                                 >
                                     {error}
@@ -285,11 +470,13 @@ const LoginPage = () => {
                             )}
 
                             {/* Form */}
+
                             <form
                                 onSubmit={handleSubmit}
                                 className="mt-5 space-y-3"
                             >
                                 {/* Email */}
+
                                 <div className="relative">
                                     <label
                                         htmlFor="email"
@@ -307,7 +494,11 @@ const LoginPage = () => {
                                         id="email"
                                         type="email"
                                         name="email"
-                                        placeholder="Email Address"
+                                        placeholder={
+                                            isAdminMode
+                                                ? "Admin Email Address"
+                                                : "Email Address"
+                                        }
                                         value={formData.email}
                                         onChange={handleChange}
                                         autoComplete="email"
@@ -328,6 +519,7 @@ const LoginPage = () => {
                                 </div>
 
                                 {/* Password */}
+
                                 <div className="relative">
                                     <label
                                         htmlFor="password"
@@ -381,6 +573,7 @@ const LoginPage = () => {
                                 </div>
 
                                 {/* Options */}
+
                                 <div className="flex items-center justify-between px-1 py-0.5 text-xs">
                                     <label className="flex cursor-pointer items-center gap-2 text-slate-500">
                                         <input
@@ -398,24 +591,23 @@ const LoginPage = () => {
                                         Remember me
                                     </label>
 
-                                    <button
-                                        type="button"
-                                        disabled
-                                        title="Forgot Password is not functional yet."
-                                        className="cursor-not-allowed text-violet-400/40"
-                                    >
-                                        Forgot Password?
-                                    </button>
                                 </div>
 
                                 {/* Login */}
+
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="group flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-blue-600 text-sm font-bold text-white shadow-lg shadow-violet-900/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-900/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className={`group flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r ${
+                                        isAdminMode
+                                            ? "from-violet-600 via-purple-600 to-fuchsia-600 shadow-violet-900/25 hover:shadow-violet-900/35"
+                                            : "from-violet-600 via-purple-600 to-blue-600 shadow-violet-900/25 hover:shadow-violet-900/35"
+                                    } text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 disabled:cursor-not-allowed disabled:opacity-60`}
                                 >
                                     {loading
                                         ? "Signing In..."
+                                        : isAdminMode
+                                        ? "Login as Admin"
                                         : "Login"}
 
                                     {!loading && (
@@ -428,6 +620,7 @@ const LoginPage = () => {
                             </form>
 
                             {/* Divider */}
+
                             <div className="my-5 flex items-center gap-3">
                                 <span className="h-px flex-1 bg-slate-800" />
 
@@ -439,6 +632,7 @@ const LoginPage = () => {
                             </div>
 
                             {/* Register */}
+
                             <button
                                 type="button"
                                 onClick={() =>
@@ -447,10 +641,12 @@ const LoginPage = () => {
                                 className="flex h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-violet-500/50 bg-violet-500/[0.04] text-sm font-semibold text-violet-200 transition hover:border-violet-400 hover:bg-violet-500/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
                             >
                                 <UserPlus size={17} />
+
                                 Create Account
                             </button>
 
                             {/* Footer */}
+
                             <p className="mt-4 text-center text-[11px] text-slate-600">
                                 Same People. Bigger Possibilities. ✨
                             </p>

@@ -54,9 +54,6 @@ const AiRoadmapPage = () => {
     try {
       await deleteRoadmap(deleteTarget.id);
 
-      // Server ko source of truth maan kar history refresh karo
-      await getRoadmaps();
-
       toast.success("Roadmap deleted successfully.");
 
       setShowDeleteDialog(false);
