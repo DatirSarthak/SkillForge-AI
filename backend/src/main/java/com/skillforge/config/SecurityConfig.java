@@ -20,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 import jakarta.servlet.DispatcherType;
@@ -33,6 +34,9 @@ public class SecurityConfig {
         private final CustomAuthenticationEntryPoint authenticationEntryPoint;
         private final CustomAccessDeniedHandler accessDeniedHandler;
 
+        @Value("${app.frontend.url}")
+        private String frontendUrl;
+
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http)
                         throws Exception {
@@ -41,6 +45,16 @@ public class SecurityConfig {
                                 .csrf(csrf -> csrf.disable())
 
                                 .cors(Customizer.withDefaults())
+
+                                .headers(headers -> headers
+                                                .contentTypeOptions(Customizer.withDefaults())
+                                                .frameOptions(frame -> frame.deny())
+                                                .referrerPolicy(referrer -> referrer
+                                                                .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                                                .httpStrictTransportSecurity(hsts -> hsts
+                                                                .includeSubDomains(true)
+                                                                .preload(false)
+                                                                .maxAgeInSeconds(31536000)))
 
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -91,8 +105,7 @@ public class SecurityConfig {
                 CorsConfiguration configuration = new CorsConfiguration();
 
                 configuration.setAllowedOrigins(List.of(
-                                "http://localhost:5173",
-                                "http://localhost:5174"));
+                                frontendUrl));
 
                 configuration.setAllowedMethods(List.of(
                                 "GET",
