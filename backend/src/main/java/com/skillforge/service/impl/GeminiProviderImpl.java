@@ -71,6 +71,7 @@ public class GeminiProviderImpl implements AiProvider {
 
                 GeminiGenerationConfig generationConfig = GeminiGenerationConfig.builder()
                                 .thinkingConfig(thinkingConfig)
+                                .responseMimeType("application/json")
                                 .build();
 
                 return GeminiRequest.builder()
@@ -122,7 +123,7 @@ public class GeminiProviderImpl implements AiProvider {
                                         ex.getResponseBodyAsString());
 
                         throw new AiServiceException(
-                                        "Daily AI quota exceeded. Please try again tomorrow.");
+                                        "You've reached today's free AI limit. Please try again tomorrow.");
 
                 } catch (RestClientResponseException ex) {
 
@@ -167,24 +168,90 @@ public class GeminiProviderImpl implements AiProvider {
                                         .body(request)
                                         .exchange((clientRequest, clientResponse) -> {
 
+                                                int statusCode = clientResponse.getStatusCode().value();
+
+                                                log.info(
+                                                                "Gemini streaming HTTP status: {}",
+                                                                statusCode);
+
+                                                /*
+                                                 * HTTP errors must be handled before
+                                                 * attempting to parse the SSE stream.
+                                                 */
+                                                if (clientResponse.getStatusCode().isError()) {
+
+                                                        StringBuilder errorBody = new StringBuilder();
+
+                                                        try (BufferedReader reader = new BufferedReader(
+                                                                        new InputStreamReader(
+                                                                                        clientResponse.getBody(),
+                                                                                        StandardCharsets.UTF_8))) {
+
+                                                                String line;
+
+                                                                while ((line = reader.readLine()) != null) {
+                                                                        errorBody.append(line);
+                                                                }
+                                                        }
+
+                                                        String responseBody = errorBody.toString();
+
+                                                        log.error(
+                                                                        "Gemini streaming request failed. status={}, response={}",
+                                                                        statusCode,
+                                                                        responseBody);
+
+                                                        if (statusCode == 429) {
+
+                                                                throw new AiServiceException(
+                                                                                "Daily AI quota exceeded. Please try again tomorrow.");
+                                                        }
+
+                                                        if (statusCode == 401) {
+
+                                                                throw new AiServiceException(
+                                                                                "Gemini API authentication failed.");
+                                                        }
+
+                                                        if (statusCode == 403) {
+
+                                                                throw new AiServiceException(
+                                                                                "Gemini API permission denied.");
+                                                        }
+
+                                                        if (statusCode >= 500) {
+
+                                                                throw new AiServiceException(
+                                                                                "Gemini AI service is temporarily unavailable.");
+                                                        }
+
+                                                        throw new AiServiceException(
+                                                                        "Gemini API request failed with status "
+                                                                                        + statusCode + ".");
+                                                }
+
                                                 try (BufferedReader reader = new BufferedReader(
                                                                 new InputStreamReader(
                                                                                 clientResponse.getBody(),
                                                                                 StandardCharsets.UTF_8))) {
 
                                                         String line;
+
                                                         int chunkCount = 0;
 
                                                         while ((line = reader.readLine()) != null) {
 
-                                                                // SSE events contain "data:" lines
+                                                                /*
+                                                                 * SSE events contain data lines.
+                                                                 */
                                                                 if (!line.startsWith("data:")) {
                                                                         continue;
                                                                 }
 
                                                                 String data = line.substring(5).trim();
 
-                                                                if (data.isEmpty() || "[DONE]".equals(data)) {
+                                                                if (data.isEmpty()
+                                                                                || "[DONE]".equals(data)) {
                                                                         continue;
                                                                 }
 
@@ -198,6 +265,7 @@ public class GeminiProviderImpl implements AiProvider {
                                                                         if (response.getCandidates() == null
                                                                                         || response.getCandidates()
                                                                                                         .isEmpty()) {
+
                                                                                 continue;
                                                                         }
 
@@ -209,11 +277,11 @@ public class GeminiProviderImpl implements AiProvider {
                                                                                         || candidate.getContent()
                                                                                                         .getParts()
                                                                                                         .isEmpty()) {
+
                                                                                 continue;
                                                                         }
 
-                                                                        String text = candidate
-                                                                                        .getContent()
+                                                                        String text = candidate.getContent()
                                                                                         .getParts()
                                                                                         .get(0)
                                                                                         .getText();
@@ -230,6 +298,10 @@ public class GeminiProviderImpl implements AiProvider {
                                                                                 onChunk.accept(text);
                                                                         }
 
+                                                                } catch (AiServiceException ex) {
+
+                                                                        throw ex;
+
                                                                 } catch (Exception parseException) {
 
                                                                         log.error(
@@ -244,6 +316,19 @@ public class GeminiProviderImpl implements AiProvider {
                                                         log.info(
                                                                         "Gemini streaming completed. totalChunks={}",
                                                                         chunkCount);
+
+                                                        /*
+                                                         * A successful HTTP response without
+                                                         * any text is not considered successful.
+                                                         */
+                                                        if (chunkCount == 0) {
+
+                                                                log.error(
+                                                                                "Gemini streaming completed without receiving any text chunks.");
+
+                                                                throw new AiServiceException(
+                                                                                "Gemini returned an empty streaming response.");
+                                                        }
 
                                                         return null;
 
@@ -261,28 +346,6 @@ public class GeminiProviderImpl implements AiProvider {
                                                                         "AI streaming service is temporarily unavailable.");
                                                 }
                                         });
-
-                } catch (HttpClientErrorException.TooManyRequests ex) {
-
-                        log.error(
-                                        "Gemini streaming quota exceeded. status={}, response={}",
-                                        ex.getStatusCode(),
-                                        ex.getResponseBodyAsString());
-
-                        throw new AiServiceException(
-                                        "Daily AI quota exceeded. Please try again tomorrow.");
-
-                } catch (RestClientResponseException ex) {
-
-                        log.error(
-                                        "Gemini streaming request failed. status={}, response={}",
-                                        ex.getStatusCode(),
-                                        ex.getResponseBodyAsString(),
-                                        ex);
-
-                        throw new AiServiceException(
-                                        "Gemini API request failed: "
-                                                        + ex.getStatusCode());
 
                 } catch (AiServiceException ex) {
 

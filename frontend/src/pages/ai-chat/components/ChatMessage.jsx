@@ -67,28 +67,37 @@ const ChatMessage = memo(({ message }) => {
                 duration: 0.35,
                 ease: "easeOut",
             }}
-            className={`mb-6 flex gap-4 ${
-                isUser
-                    ? "justify-end"
-                    : "justify-start"
-            }`}
+            className={`
+                mb-6
+                flex
+                min-w-0
+                max-w-full
+                gap-4
+                ${
+                    isUser
+                        ? "justify-end"
+                        : "justify-start"
+                }
+            `}
         >
             {!isUser && (
-                <div className="mt-1">
-                    <div className="
-                        flex
-                        h-10
-                        w-10
-                        items-center
-                        justify-center
-                        rounded-full
-                        bg-gradient-to-r
-                        from-blue-600
-                        to-indigo-600
-                        text-white
-                        shadow
-                        dark:bg-blue-500
-                    ">
+                <div className="mt-1 shrink-0">
+                    <div
+                        className="
+                            flex
+                            h-10
+                            w-10
+                            items-center
+                            justify-center
+                            rounded-full
+                            bg-gradient-to-r
+                            from-blue-600
+                            to-indigo-600
+                            text-white
+                            shadow
+                            dark:bg-blue-500
+                        "
+                    >
                         <Bot size={20} />
                     </div>
                 </div>
@@ -97,14 +106,17 @@ const ChatMessage = memo(({ message }) => {
             <div
                 className={`
                     relative
-                    max-w-[95%]
+                    min-w-0
+                    max-w-full
+                    overflow-x-hidden
                     rounded-3xl
-                    px-6
+                    px-5
                     py-5
                     shadow-md
                     transition-all
                     duration-300
                     sm:max-w-[90%]
+                    sm:px-6
                     md:max-w-[80%]
                     hover:-translate-y-1
                     hover:shadow-xl
@@ -117,56 +129,93 @@ const ChatMessage = memo(({ message }) => {
                 `}
             >
                 {isUser ? (
-                    <p className="whitespace-pre-wrap">
+                    <p
+                        className="
+                            min-w-0
+                            whitespace-pre-wrap
+                            break-words
+                            [overflow-wrap:anywhere]
+                        "
+                    >
                         {message.message}
                     </p>
                 ) : isStreaming && !hasMessage ? (
-                    <div className="
-                        flex
-                        items-center
-                        gap-1.5
-                        py-1
-                    ">
-                        <span className="
-                            h-2.5
-                            w-2.5
-                            animate-bounce
-                            rounded-full
-                            bg-blue-500
-                        " />
+                    <div
+                        className="
+                            flex
+                            items-center
+                            gap-1.5
+                            py-1
+                        "
+                    >
+                        <span
+                            className="
+                                h-2.5
+                                w-2.5
+                                animate-bounce
+                                rounded-full
+                                bg-blue-500
+                            "
+                        />
 
-                        <span className="
-                            h-2.5
-                            w-2.5
-                            animate-bounce
-                            rounded-full
-                            bg-blue-500
-                            [animation-delay:150ms]
-                        " />
+                        <span
+                            className="
+                                h-2.5
+                                w-2.5
+                                animate-bounce
+                                rounded-full
+                                bg-blue-500
+                                [animation-delay:150ms]
+                            "
+                        />
 
-                        <span className="
-                            h-2.5
-                            w-2.5
-                            animate-bounce
-                            rounded-full
-                            bg-blue-500
-                            [animation-delay:300ms]
-                        " />
+                        <span
+                            className="
+                                h-2.5
+                                w-2.5
+                                animate-bounce
+                                rounded-full
+                                bg-blue-500
+                                [animation-delay:300ms]
+                            "
+                        />
                     </div>
                 ) : (
-                    <StreamingMessage
-                        text={message.message}
-                    />
+                    <div
+                        className="
+                            min-w-0
+                            max-w-full
+                            overflow-x-auto
+                            overflow-y-hidden
+                        "
+                    >
+                        <StreamingMessage
+                            text={message.message}
+                        />
+                    </div>
                 )}
 
                 {hasMessage && (
-                    <div className="mt-4 flex items-center justify-between">
-                        <small className="
-                            text-[10px]
-                            tracking-wide
-                            text-slate-400
-                            dark:text-slate-500
-                        ">
+                    <div
+                        className="
+                            mt-4
+                            flex
+                            min-w-0
+                            items-center
+                            justify-between
+                            gap-3
+                        "
+                    >
+                        <small
+                            className="
+                                min-w-0
+                                truncate
+                                text-[10px]
+                                tracking-wide
+                                text-slate-400
+                                dark:text-slate-500
+                            "
+                        >
                             {message.createdAt
                                 ? new Date(
                                     message.createdAt
@@ -185,6 +234,7 @@ const ChatMessage = memo(({ message }) => {
                             onClick={copyMessage}
                             className={`
                                 flex
+                                shrink-0
                                 items-center
                                 gap-1
                                 rounded-lg
@@ -216,22 +266,24 @@ const ChatMessage = memo(({ message }) => {
             </div>
 
             {isUser && (
-                <div className="mt-1">
-                    <div className="
-                        flex
-                        h-9
-                        w-9
-                        items-center
-                        justify-center
-                        rounded-full
-                        bg-gradient-to-r
-                        from-blue-600
-                        to-indigo-600
-                        text-white
-                        shadow
-                        md:h-10
-                        md:w-10
-                    ">
+                <div className="mt-1 shrink-0">
+                    <div
+                        className="
+                            flex
+                            h-9
+                            w-9
+                            items-center
+                            justify-center
+                            rounded-full
+                            bg-gradient-to-r
+                            from-blue-600
+                            to-indigo-600
+                            text-white
+                            shadow
+                            md:h-10
+                            md:w-10
+                        "
+                    >
                         <User size={20} />
                     </div>
                 </div>

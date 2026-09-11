@@ -85,13 +85,18 @@ dark:border-slate-800
                     setSearchTerm={setSearchTerm}
                 />
 
-                <div className="
-flex
-flex-1
-flex-col
-bg-white
-dark:bg-slate-900
-">
+                <div
+                    className="
+        flex
+        min-w-0
+        w-0
+        flex-1
+        flex-col
+        overflow-hidden
+        bg-white
+        dark:bg-slate-900
+    "
+                >
 
                     <ChatHeader
 

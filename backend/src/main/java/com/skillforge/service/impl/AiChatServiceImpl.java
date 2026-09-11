@@ -8,6 +8,7 @@ import com.skillforge.entity.ChatMessage;
 import com.skillforge.entity.Conversation;
 import com.skillforge.entity.MessageSender;
 import com.skillforge.entity.User;
+import com.skillforge.exception.AiServiceException;
 import com.skillforge.exception.ResourceNotFoundException;
 import com.skillforge.mapper.AiChatMapper;
 import com.skillforge.repository.ChatMessageRepository;
@@ -31,265 +32,273 @@ import java.util.function.Consumer;
 @Slf4j
 public class AiChatServiceImpl implements AiChatService {
 
-    private final ConversationRepository conversationRepository;
-    private final ChatMessageRepository chatMessageRepository;
-    private final UserService userService;
-    private final AiProvider aiProvider;
-    private final AiChatMapper aiChatMapper;
+        private final ConversationRepository conversationRepository;
+        private final ChatMessageRepository chatMessageRepository;
+        private final UserService userService;
+        private final AiProvider aiProvider;
+        private final AiChatMapper aiChatMapper;
 
-    @Override
-    public ChatResponseDto chat(ChatRequestDto request) {
+        @Override
+        public ChatResponseDto chat(ChatRequestDto request) {
 
-        User currentUser = userService.getCurrentUserEntity();
+                User currentUser = userService.getCurrentUserEntity();
 
-        Conversation conversation;
+                Conversation conversation;
 
-        if (request.getConversationId() == null) {
+                if (request.getConversationId() == null) {
 
-            conversation = createConversation(
-                    currentUser,
-                    request.getMessage());
+                        conversation = createConversation(
+                                        currentUser,
+                                        request.getMessage());
 
-        } else {
+                } else {
 
-            conversation = conversationRepository
-                    .findByIdAndUser(
-                            request.getConversationId(),
-                            currentUser)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Conversation not found."));
+                        conversation = conversationRepository
+                                        .findByIdAndUser(
+                                                        request.getConversationId(),
+                                                        currentUser)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Conversation not found."));
+                }
+
+                ChatMessage userMessage = ChatMessage.builder()
+                                .conversation(conversation)
+                                .sender(MessageSender.USER)
+                                .message(request.getMessage())
+                                .build();
+
+                chatMessageRepository.save(userMessage);
+
+                conversation.getMessages().add(userMessage);
+
+                long start = System.currentTimeMillis();
+
+                String aiText = aiProvider.generateResponse(
+                                request.getMessage());
+
+                long end = System.currentTimeMillis();
+
+                log.info(
+                                "AI response generated in {} ms for conversation {}",
+                                (end - start),
+                                conversation.getId());
+
+                ChatMessage aiMessage = ChatMessage.builder()
+                                .conversation(conversation)
+                                .sender(MessageSender.AI)
+                                .message(aiText)
+                                .build();
+
+                chatMessageRepository.save(aiMessage);
+
+                conversation.getMessages().add(aiMessage);
+
+                conversation.setUpdatedAt(LocalDateTime.now());
+
+                conversationRepository.save(conversation);
+
+                conversation = conversationRepository
+                                .findById(conversation.getId())
+                                .orElseThrow();
+
+                return ChatResponseDto.builder()
+                                .conversation(
+                                                aiChatMapper.toConversationDto(conversation))
+                                .userMessage(
+                                                aiChatMapper.toChatMessageDto(userMessage))
+                                .aiMessage(
+                                                aiChatMapper.toChatMessageDto(aiMessage))
+                                .build();
         }
 
-        ChatMessage userMessage = ChatMessage.builder()
-                .conversation(conversation)
-                .sender(MessageSender.USER)
-                .message(request.getMessage())
-                .build();
+        @Override
+        public ChatResponseDto streamChat(
+                        ChatRequestDto request,
+                        Consumer<String> onChunk) {
 
-        chatMessageRepository.save(userMessage);
+                User currentUser = userService.getCurrentUserEntity();
 
-        conversation.getMessages().add(userMessage);
+                Conversation conversation;
 
-        long start = System.currentTimeMillis();
+                if (request.getConversationId() == null) {
 
-        String aiText = aiProvider.generateResponse(
-                request.getMessage());
+                        conversation = createConversation(
+                                        currentUser,
+                                        request.getMessage());
 
-        long end = System.currentTimeMillis();
+                } else {
 
-        log.info(
-                "AI response generated in {} ms for conversation {}",
-                (end - start),
-                conversation.getId());
+                        conversation = conversationRepository
+                                        .findByIdAndUser(
+                                                        request.getConversationId(),
+                                                        currentUser)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Conversation not found."));
+                }
 
-        ChatMessage aiMessage = ChatMessage.builder()
-                .conversation(conversation)
-                .sender(MessageSender.AI)
-                .message(aiText)
-                .build();
+                /*
+                 * Save user message before starting AI generation.
+                 */
+                ChatMessage userMessage = ChatMessage.builder()
+                                .conversation(conversation)
+                                .sender(MessageSender.USER)
+                                .message(request.getMessage())
+                                .build();
 
-        chatMessageRepository.save(aiMessage);
+                chatMessageRepository.save(userMessage);
 
-        conversation.getMessages().add(aiMessage);
+                conversation.getMessages().add(userMessage);
 
-        conversation.setUpdatedAt(LocalDateTime.now());
+                /*
+                 * Collect the complete AI response while
+                 * simultaneously forwarding every chunk
+                 * to the controller.
+                 */
+                StringBuilder aiResponseBuilder = new StringBuilder();
 
-        conversationRepository.save(conversation);
+                long start = System.currentTimeMillis();
 
-        conversation = conversationRepository
-                .findById(conversation.getId())
-                .orElseThrow();
+                aiProvider.streamResponse(
+                                request.getMessage(),
+                                chunk -> {
 
-        return ChatResponseDto.builder()
-                .conversation(
-                        aiChatMapper.toConversationDto(conversation))
-                .userMessage(
-                        aiChatMapper.toChatMessageDto(userMessage))
-                .aiMessage(
-                        aiChatMapper.toChatMessageDto(aiMessage))
-                .build();
-    }
+                                        if (chunk == null || chunk.isEmpty()) {
+                                                return;
+                                        }
 
-    @Override
-    public ChatResponseDto streamChat(
-            ChatRequestDto request,
-            Consumer<String> onChunk) {
+                                        aiResponseBuilder.append(chunk);
 
-        User currentUser = userService.getCurrentUserEntity();
+                                        onChunk.accept(chunk);
+                                });
 
-        Conversation conversation;
+                long end = System.currentTimeMillis();
 
-        if (request.getConversationId() == null) {
+                String aiText = aiResponseBuilder.toString();
 
-            conversation = createConversation(
-                    currentUser,
-                    request.getMessage());
+                if (aiText.isBlank()) {
 
-        } else {
+                        log.error(
+                                        "AI streaming returned an empty response for conversation {}",
+                                        conversation.getId());
 
-            conversation = conversationRepository
-                    .findByIdAndUser(
-                            request.getConversationId(),
-                            currentUser)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Conversation not found."));
+                        throw new AiServiceException(
+                                        "AI returned an empty response. Please try again.");
+                }
+
+                log.info(
+                                "AI streaming response completed in {} ms for conversation {}",
+                                (end - start),
+                                conversation.getId());
+                /*
+                 * Save ONE AI message after the complete
+                 * streaming response has been received.
+                 */
+                ChatMessage aiMessage = ChatMessage.builder()
+                                .conversation(conversation)
+                                .sender(MessageSender.AI)
+                                .message(aiText)
+                                .build();
+
+                chatMessageRepository.save(aiMessage);
+
+                conversation.getMessages().add(aiMessage);
+
+                conversation.setUpdatedAt(LocalDateTime.now());
+
+                conversationRepository.save(conversation);
+
+                /*
+                 * Reload the conversation so that the final
+                 * response contains the authoritative database state.
+                 */
+                conversation = conversationRepository
+                                .findById(conversation.getId())
+                                .orElseThrow();
+
+                return ChatResponseDto.builder()
+                                .conversation(
+                                                aiChatMapper.toConversationDto(conversation))
+                                .userMessage(
+                                                aiChatMapper.toChatMessageDto(userMessage))
+                                .aiMessage(
+                                                aiChatMapper.toChatMessageDto(aiMessage))
+                                .build();
         }
 
-        /*
-         * Save user message before starting AI generation.
-         */
-        ChatMessage userMessage = ChatMessage.builder()
-                .conversation(conversation)
-                .sender(MessageSender.USER)
-                .message(request.getMessage())
-                .build();
+        @Override
+        @Transactional(readOnly = true)
+        public ConversationDto getConversation(UUID conversationId) {
 
-        chatMessageRepository.save(userMessage);
+                User currentUser = userService.getCurrentUserEntity();
 
-        conversation.getMessages().add(userMessage);
+                Conversation conversation = conversationRepository
+                                .findByIdAndUser(conversationId, currentUser)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Conversation not found."));
 
-        /*
-         * Collect the complete AI response while
-         * simultaneously forwarding every chunk
-         * to the controller.
-         */
-        StringBuilder aiResponseBuilder = new StringBuilder();
-
-        long start = System.currentTimeMillis();
-
-        aiProvider.streamResponse(
-                request.getMessage(),
-                chunk -> {
-
-                    if (chunk == null || chunk.isEmpty()) {
-                        return;
-                    }
-
-                    aiResponseBuilder.append(chunk);
-
-                    onChunk.accept(chunk);
-                });
-
-        long end = System.currentTimeMillis();
-
-        String aiText = aiResponseBuilder.toString();
-
-        log.info(
-                "AI streaming response completed in {} ms for conversation {}",
-                (end - start),
-                conversation.getId());
-
-        /*
-         * Save ONE AI message after the complete
-         * streaming response has been received.
-         */
-        ChatMessage aiMessage = ChatMessage.builder()
-                .conversation(conversation)
-                .sender(MessageSender.AI)
-                .message(aiText)
-                .build();
-
-        chatMessageRepository.save(aiMessage);
-
-        conversation.getMessages().add(aiMessage);
-
-        conversation.setUpdatedAt(LocalDateTime.now());
-
-        conversationRepository.save(conversation);
-
-        /*
-         * Reload the conversation so that the final
-         * response contains the authoritative database state.
-         */
-        conversation = conversationRepository
-                .findById(conversation.getId())
-                .orElseThrow();
-
-        return ChatResponseDto.builder()
-                .conversation(
-                        aiChatMapper.toConversationDto(conversation))
-                .userMessage(
-                        aiChatMapper.toChatMessageDto(userMessage))
-                .aiMessage(
-                        aiChatMapper.toChatMessageDto(aiMessage))
-                .build();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ConversationDto getConversation(UUID conversationId) {
-
-        User currentUser = userService.getCurrentUserEntity();
-
-        Conversation conversation = conversationRepository
-                .findByIdAndUser(conversationId, currentUser)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Conversation not found."));
-
-        return aiChatMapper.toConversationDto(conversation);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ConversationSummaryDto> getUserConversations() {
-
-        User currentUser = userService.getCurrentUserEntity();
-
-        List<Conversation> conversations =
-                conversationRepository.findByUserOrderByUpdatedAtDesc(
-                        currentUser);
-
-        return aiChatMapper.toConversationSummaryDtoList(
-                conversations);
-    }
-
-    @Override
-    public void deleteConversation(UUID conversationId) {
-
-        User currentUser = userService.getCurrentUserEntity();
-
-        Conversation conversation = conversationRepository
-                .findByIdAndUser(conversationId, currentUser)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Conversation not found."));
-
-        conversationRepository.delete(conversation);
-    }
-
-    @Override
-    public void renameConversation(
-            UUID conversationId,
-            String title) {
-
-        User currentUser = userService.getCurrentUserEntity();
-
-        Conversation conversation = conversationRepository
-                .findByIdAndUser(conversationId, currentUser)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Conversation not found."));
-
-        conversation.setTitle(title.trim());
-
-        conversation.setUpdatedAt(LocalDateTime.now());
-
-        conversationRepository.save(conversation);
-    }
-
-    private Conversation createConversation(
-            User user,
-            String firstMessage) {
-
-        String title = firstMessage.trim();
-
-        if (title.length() > 50) {
-            title = title.substring(0, 50).trim();
+                return aiChatMapper.toConversationDto(conversation);
         }
 
-        Conversation conversation = Conversation.builder()
-                .user(user)
-                .title(title)
-                .build();
+        @Override
+        @Transactional(readOnly = true)
+        public List<ConversationSummaryDto> getUserConversations() {
 
-        return conversationRepository.save(conversation);
-    }
+                User currentUser = userService.getCurrentUserEntity();
+
+                List<Conversation> conversations = conversationRepository.findByUserOrderByUpdatedAtDesc(
+                                currentUser);
+
+                return aiChatMapper.toConversationSummaryDtoList(
+                                conversations);
+        }
+
+        @Override
+        public void deleteConversation(UUID conversationId) {
+
+                User currentUser = userService.getCurrentUserEntity();
+
+                Conversation conversation = conversationRepository
+                                .findByIdAndUser(conversationId, currentUser)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Conversation not found."));
+
+                conversationRepository.delete(conversation);
+        }
+
+        @Override
+        public void renameConversation(
+                        UUID conversationId,
+                        String title) {
+
+                User currentUser = userService.getCurrentUserEntity();
+
+                Conversation conversation = conversationRepository
+                                .findByIdAndUser(conversationId, currentUser)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Conversation not found."));
+
+                conversation.setTitle(title.trim());
+
+                conversation.setUpdatedAt(LocalDateTime.now());
+
+                conversationRepository.save(conversation);
+        }
+
+        private Conversation createConversation(
+                        User user,
+                        String firstMessage) {
+
+                String title = firstMessage.trim();
+
+                if (title.length() > 50) {
+                        title = title.substring(0, 50).trim();
+                }
+
+                Conversation conversation = Conversation.builder()
+                                .user(user)
+                                .title(title)
+                                .build();
+
+                return conversationRepository.save(conversation);
+        }
 }

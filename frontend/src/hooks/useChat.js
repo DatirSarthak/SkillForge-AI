@@ -252,7 +252,7 @@ const useChat = () => {
                                     ).map(
                                         (msg) =>
                                             msg.id ===
-                                            temporaryAiMessage.id
+                                                temporaryAiMessage.id
                                                 ? {
                                                     ...msg,
                                                     message:
@@ -417,7 +417,7 @@ const useChat = () => {
                                     String(
                                         item.id
                                     ) ===
-                                    conversationId
+                                        conversationId
                                         ? latestConversation
                                         : item
                             );
@@ -473,7 +473,7 @@ const useChat = () => {
             );
 
             toast.error(
-                "Failed to send message."
+                error?.message || "Failed to send message."
             );
 
         } finally {

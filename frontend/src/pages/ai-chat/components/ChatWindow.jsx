@@ -87,15 +87,17 @@ const ChatWindow = ({
             <div className="flex h-full items-center justify-center">
                 <div className="animate-pulse text-slate-500 dark:text-slate-400">
                     <div className="flex flex-col items-center gap-3">
-                        <div className="
-                            h-8
-                            w-8
-                            animate-spin
-                            rounded-full
-                            border-4
-                            border-blue-500
-                            border-t-transparent
-                        " />
+                        <div
+                            className="
+                                h-8
+                                w-8
+                                animate-spin
+                                rounded-full
+                                border-4
+                                border-blue-500
+                                border-t-transparent
+                            "
+                        />
 
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Loading conversation...
@@ -116,8 +118,11 @@ const ChatWindow = ({
             onScroll={handleScroll}
             className="
                 relative
+                min-w-0
+                w-full
                 flex-1
                 overflow-y-auto
+                overflow-x-hidden
                 bg-gradient-to-b
                 from-slate-50
                 via-slate-100
@@ -132,18 +137,20 @@ const ChatWindow = ({
             "
         >
             {messages.length === 0 && (
-                <div className="
-                    py-16
-                    text-center
-                    text-slate-400
-                    dark:text-slate-500
-                ">
+                <div
+                    className="
+                        py-16
+                        text-center
+                        text-slate-400
+                        dark:text-slate-500
+                    "
+                >
                     Start your conversation with
                     SkillForge AI 🚀
                 </div>
             )}
 
-            <div className="space-y-5">
+            <div className="min-w-0 w-full max-w-full space-y-5">
                 {messages.map((message) => (
                     <ChatMessage
                         key={message.id}

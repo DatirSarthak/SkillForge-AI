@@ -8,16 +8,27 @@ const StreamingMessage = ({ text }) => {
     return (
         <div
             className="
-                prose
-                prose-slate
-                dark:prose-invert
-                max-w-none
+                min-w-0
+                max-w-full
                 leading-8
+                w-full
             "
         >
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
+                    /*
+                     * ReactMarkdown normally wraps fenced code
+                     * inside a <pre> element.
+                     *
+                     * CodeBlock already provides its own container,
+                     * so removing the extra <pre> wrapper prevents
+                     * mobile layout and whitespace conflicts.
+                     */
+                    pre({ children }) {
+                        return <>{children}</>;
+                    },
+
                     code({
                         inline,
                         className,
@@ -63,7 +74,12 @@ const StreamingMessage = ({ text }) => {
 
                     table(props) {
                         return (
-                            <div className="overflow-x-auto">
+                            <div
+                                className="
+                                    max-w-full
+                                    overflow-x-auto
+                                "
+                            >
                                 <table
                                     className="
                                         w-full

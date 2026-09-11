@@ -14,4 +14,6 @@ import lombok.Setter;
 public class GeminiGenerationConfig {
 
     private GeminiThinkingConfig thinkingConfig;
+
+    private String responseMimeType;
 }

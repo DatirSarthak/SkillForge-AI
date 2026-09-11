@@ -8,6 +8,7 @@ import com.skillforge.dto.ai.ChatResponseDto;
 import com.skillforge.dto.ai.ConversationDto;
 import com.skillforge.dto.ai.ConversationSummaryDto;
 import com.skillforge.dto.ai.RenameConversationRequestDto;
+import com.skillforge.exception.AiServiceException;
 import com.skillforge.service.AiChatService;
 import com.skillforge.util.ResponseUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -61,9 +62,9 @@ public class AiChatController {
 
                                                                 outputStream.write(
                                                                                 ("event: chunk\n" +
-                                                                                                "data: " + data
-                                                                                                + "\n\n")
-                                                                                                .getBytes(StandardCharsets.UTF_8));
+                                                                                                "data: " + data +
+                                                                                                "\n\n").getBytes(
+                                                                                                                StandardCharsets.UTF_8));
 
                                                                 outputStream.flush();
 
@@ -82,31 +83,58 @@ public class AiChatController {
 
                                 outputStream.write(
                                                 ("event: done\n" +
-                                                                "data: " + doneData + "\n\n")
-                                                                .getBytes(StandardCharsets.UTF_8));
+                                                                "data: " + doneData +
+                                                                "\n\n").getBytes(StandardCharsets.UTF_8));
 
                                 outputStream.flush();
 
                         } catch (Exception ex) {
                                 log.error("AI streaming controller failed.", ex);
-                                try {
 
-                                        String errorData = objectMapper.writeValueAsString(
-                                                        new StreamError(
-                                                                        "AI response streaming failed."));
+                                try {
+                                        String errorMessage = getStreamErrorMessage(ex);
+
+                                        String errorEvent = objectMapper.writeValueAsString(
+                                                        new StreamError(errorMessage));
 
                                         outputStream.write(
                                                         ("event: error\n" +
-                                                                        "data: " + errorData + "\n\n")
+                                                                        "data: " + errorEvent + "\n\n")
                                                                         .getBytes(StandardCharsets.UTF_8));
 
                                         outputStream.flush();
 
-                                } catch (Exception ignored) {
-                                        // Client may have disconnected.
+                                } catch (Exception streamException) {
+                                        log.error(
+                                                        "Failed to send AI streaming error event.",
+                                                        streamException);
                                 }
                         }
                 };
+        }
+
+        /**
+         * Converts known AI service exceptions into
+         * user-friendly SSE error messages.
+         */
+        private String getStreamErrorMessage(Exception ex) {
+
+                if (ex instanceof AiServiceException) {
+                        return ex.getMessage();
+                }
+
+                Throwable cause = ex.getCause();
+
+                while (cause != null) {
+
+                        if (cause instanceof AiServiceException) {
+                                return cause.getMessage();
+                        }
+
+                        cause = cause.getCause();
+                }
+
+                return "AI response streaming failed.";
         }
 
         @GetMapping("/conversations")
