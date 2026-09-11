@@ -3,8 +3,6 @@ package com.skillforge.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.skillforge.constants.ErrorCodes;
-
 import com.skillforge.dto.quiz.QuizAnswerDto;
 import com.skillforge.dto.quiz.QuizAttemptAnswerDto;
 import com.skillforge.dto.quiz.QuizAttemptRequestDto;
@@ -23,7 +21,6 @@ import com.skillforge.entity.QuizQuestion;
 import com.skillforge.entity.User;
 
 import com.skillforge.exception.AiException;
-import com.skillforge.exception.ConflictException;
 import com.skillforge.exception.ResourceNotFoundException;
 
 import com.skillforge.mapper.AiQuizMapper;
@@ -81,7 +78,7 @@ public class AiQuizServiceImpl implements AiQuizService {
                                 difficulty,
                                 request.questionCount());
 
-                String aiResponse = aiProvider.generateResponse(prompt);
+                String aiResponse = aiProvider.generateJsonResponse(prompt);
 
                 AiQuizResponseDto generatedQuiz = parseAiResponse(aiResponse);
 

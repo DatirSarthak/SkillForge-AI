@@ -6,6 +6,8 @@ public interface AiProvider {
 
     String generateResponse(String prompt);
 
+    String generateJsonResponse(String prompt);
+
     String generateConversationTitle(String message);
 
     void streamResponse(String prompt, Consumer<String> onChunk);

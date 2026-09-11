@@ -148,10 +148,7 @@ public class ResumeReviewServiceImpl
              * Controller/business logic does not directly
              * communicate with Gemini.
              */
-            String aiResponse =
-                    aiProvider.generateResponse(
-                            prompt
-                    );
+            String aiResponse = aiProvider.generateJsonResponse(prompt);
 
             /*
              * Step 8:

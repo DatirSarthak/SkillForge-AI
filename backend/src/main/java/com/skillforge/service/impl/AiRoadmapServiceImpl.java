@@ -55,7 +55,7 @@ public class AiRoadmapServiceImpl implements AiRoadmapService {
                 request.targetRole()
         );
 
-        String aiResponse = aiProvider.generateResponse(prompt);
+        String aiResponse = aiProvider.generateJsonResponse(prompt);
 
         AiRoadmapResponseDto generatedRoadmap =
                 parseAiResponse(aiResponse);
